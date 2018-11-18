@@ -1,0 +1,26 @@
+{
+  "name": "cs6083_oingo",
+  "version": "1.0.0",
+  "description": "Project for CS6083 Fall2018",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jingxianwtan/cs6083_oingo.git"
+  },
+  "keywords": [
+    "cs6083",
+    "oingo"
+  ],
+  "author": "Jingxian Tan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jingxianwtan/cs6083_oingo/issues"
+  },
+  "homepage": "https://github.com/jingxianwtan/cs6083_oingo#readme",
+  "dependencies": {
+    "mysql": "^2.16.0"
+  }
+}
