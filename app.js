@@ -1,28 +1,111 @@
-const http = require('http');
-const db_config = require('./config/database');
-const mysql = require('mysql');
+const express = require('express');
+const path = require('path');
+const bodyParser = require('body-parser');
+const session = require('express-session');
+const expressValidator = require('express-validator');
+const messages = require('express-messages');
+const passport = require('passport');
+const MySqlStore = require('express-mysql-session')(session);
 
+const mysql_conn = require('./models/MySqlConn');
+
+// Initiate the app
+const app = express();
+
+// View engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+// Set global errors variable
+app.locals.errors = null;
+
+// Body Parser middleware
+app.use(bodyParser.urlencoded({ extended: false})); // parse application/x-www-form-urlencoded
+app.use(bodyParser.json()); // parse application/json
+
+// Express session middleware
+const sessionStore = new MySqlStore({}, mysql_conn);
+app.use(session({
+  key: 'session_cookie_name',
+  secret: 'session_cookie_secret',
+  store: sessionStore,
+  resave: true, // need to be True for the success message to appear during operation
+  saveUninitialized: true
+  // cookie: {secure: true} // need to comment this line out for the success message to appear during operation
+}));
+
+// Express validator middleware
+app.use(expressValidator({
+  errorFormatter: function(param, msg, value) {
+    var namespace = param.split('.'),
+      root = namespace.shift(),
+      formParam = root;
+
+    while (namespace.length) {
+      formParam += '[' + namespace.shift() + ']';
+    }
+
+    return {
+      param: formParam,
+      msg: msg,
+      value: value
+    };
+  }
+}));
+
+// Express messages middleware
+app.use(require('connect-flash')());
+app.use(function(req, res, next) {
+  res.locals.messages = require('express-messages')(req, res);
+  next();
+});
+
+// Passport config
+require('./config/passport')(passport);
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Set global variables?
+app.get('*', function(req, res, next) {
+  res.locals.user = req.user || null; // if the user is logged in I'll have that user,  or it'll be null.
+  next();
+});
+
+// Set routes
+const pages = require('./routes/pages.js');
+const users = require('./routes/users.js');
+app.use('/', pages);
+app.use('/users', users);
+
+// Test sql
+// mysql_conn.query(`select * from users where username = 'williamtan'`, function (err, rows) {
+//   if (err) console.log(err);
+//
+//   if (!rows.length) {
+//     console.log('No users were found!');
+//   }
+//
+//   console.log(rows[0]);
+// });
+//
+// mysql_conn.query(`INSERT INTO users (username, password) VALUES ('stranger','xyzzzzzzzz');`, function (err, rows) {
+//   if (err) console.log(err);
+//   console.log(rows);
+//
+//   if (!rows.length) {
+//     console.log('No users were found!');
+//   }
+//
+//   console.log(rows[0]);
+// });
+
+// Start the server
 const hostname = '127.0.0.1';
 const port = 3000;
 
-const mysql_conn = mysql.createConnection({
-  host: db_config.host,
-  user: db_config.user,
-  password: db_config.password,
-  port: db_config.port
+app.listen(port, function() {
+  console.log('Server started on port ' + port);
 });
 
-mysql_conn.connect(function(err) {
-  if (err) throw err;
-  console.log("MySQL Database connected!");
-});
 
-const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('Hello World\n');
-});
-
-server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
