@@ -1,0 +1,24 @@
+<% include ./_layouts/header %>
+<h2 class="page-title">Everyone</h2>
+<br><br>
+
+<table class="table table-striped sorting">
+    <thead>
+    <tr>
+        <th>User Id</th>
+        <th>User Name</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <% users.forEach(function(user) { %>
+        <tr>
+            <td><%= user.user_id %></td>
+            <td><%= user.username %></td>
+            <td><a href="/friends/add-friend/<%= user.user_id %>">Add friend</a></td>
+        </tr>
+    <% }); %>
+    </tbody>
+</table>
+
+<% include ./_layouts/footer %>

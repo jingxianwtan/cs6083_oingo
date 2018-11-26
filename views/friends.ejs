@@ -1,0 +1,24 @@
+<% include ./_layouts/header %>
+<h2 class="page-title">Friends</h2>
+<br><br>
+
+<table class="table table-striped sorting">
+    <thead>
+    <tr>
+        <th>Friend Id</th>
+        <th>Friend Name</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <% friends.forEach(function(friend) { %>
+        <tr>
+            <td><%= friend.user_id %></td>
+            <td><%= friend.username %></td>
+            <td><a href="/friends/unfriend/<%= friend.user_id %>">Unfriend</a></td>
+        </tr>
+    <% }); %>
+    </tbody>
+</table>
+
+<% include ./_layouts/footer %>
