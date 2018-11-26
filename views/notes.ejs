@@ -1,0 +1,27 @@
+<% include ./_layouts/header %>
+<h2 class="page-title">Notes</h2>
+<a href="/notes/add-note" class="btn btn-primary">Add a new note</a>
+<br><br>
+
+<table class="table table-striped sorting">
+    <thead>
+    <tr>
+        <th>Text</th>
+        <th>Posted By User Id</th>
+        <th>Radius</th>
+        <th>Post Time</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% notes.forEach(function(note) { %>
+        <tr>
+            <td><%= note.text %></td>
+            <td><%= note.user_id %></td>
+            <td><%= note.radius %></td>
+            <td><%= note.timestamp %></td>
+        </tr>
+    <% }); %>
+    </tbody>
+</table>
+
+<% include ./_layouts/footer %>

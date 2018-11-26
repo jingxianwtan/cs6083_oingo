@@ -78,8 +78,11 @@ app.get('*', function(req, res, next) {
 // Set routes
 const pages = require('./routes/pages.js');
 const users = require('./routes/users.js');
+const notes = require('./routes/notes.js');
+
 app.use('/', pages);
 app.use('/users', users);
+app.use('/notes', notes);
 
 // Test sql
 // mysql_conn.query(`select * from users where username = 'williamtan'`, function (err, rows) {
