@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const passport = require('passport');
 
 const mysql_conn = require('../models/MySqlConn');
 
@@ -24,6 +25,7 @@ router.post('/register', function(req, res) {
   if (errors) {
     res.render('register', {
       errors: errors,
+      user: null,
       title: 'Register'
     });
   } else {
@@ -38,7 +40,7 @@ router.post('/register', function(req, res) {
           bcrypt.hash(password, salt, function (err, hash) {
             if (err) console.log(err);
 
-            mysql_conn.query(`INSERT INTO users (username, password) VALUES ('${username}','${hash}');`, function(err) { // Query that inserts the user into table
+            mysql_conn.query(`insert into users (username, password) values ('${username}','${hash}');`, function(err) { // Query that inserts the user into table
               if (err) console.log(err);
 
               req.flash('success', 'You are now registered!');
@@ -49,6 +51,34 @@ router.post('/register', function(req, res) {
       }
     });
   }
+});
+
+/* GET login */
+router.get('/login', function(req, res) {
+  if (res.locals.user) {
+    res.redirect('/');
+  } else {
+    res.render('login', {
+      title: 'Log in'
+    });
+  }
+});
+
+/* POST login */
+router.post('/login', function(req, res, next) {
+  passport.authenticate('local', {
+    successRedirect: '/',
+    failureRedirect: '/users/login',
+    failureFlash: true
+  })(req, res, next);
+});
+
+/* GET logout */
+router.get('/logout', function(req, res) {
+  req.logout();
+
+  req.flash('success', 'You are logged out!');
+  res.redirect('/users/login');
 });
 
 // Exports

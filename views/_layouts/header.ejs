@@ -6,6 +6,7 @@
     <meta name="description" content="">
     <meta name="author" content="jingliu">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/style.css">
     <title><%= title %></title>
 </head>
 
@@ -38,9 +39,13 @@
             </li>
         </ul>
         <div class="form-inline my-2 my-lg-0">
+            <% if (user) { %>
+            <div><a href="/users/logout">Hi, <%= user.username %> (Log out) </a></div>
+            <% } else { %>
             <div><a href="/users/register">Register</a></div>
             <div>&nbsp;&nbsp;&nbsp;&nbsp;</div>
             <div><a href="/users/login">Log in</a></div>
+            <% } %>
         </div>
     </div>
 </nav>

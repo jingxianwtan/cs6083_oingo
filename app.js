@@ -16,6 +16,9 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+// Set public folder
+app.use(express.static(path.join(__dirname, 'public'))); // So that all the css in public folder can be applied.
+
 // Set global errors variable
 app.locals.errors = null;
 
