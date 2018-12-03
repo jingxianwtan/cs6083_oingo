@@ -1,4 +1,15 @@
 module.exports = function Utils() {
+  this.getTagsFromText = function getTagsFromText(text) {
+    const tagRegex = /(^|)#([\w]+)/gm;
+
+    let matches = [];
+    let match;
+    while (match = tagRegex.exec(text)) {
+      matches.push(match[2]);
+    }
+    return matches;
+  };
+
   this.textWithClickableTags = function replaceHashTagsInText(text) {
     const hashtagRegex = /(^|)#([\w]+)/gm;
     return text.replace(hashtagRegex, `$1<a href='/tags/$2/'>#$2</a>`)

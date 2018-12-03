@@ -20,7 +20,7 @@ router.get('/', auth.isUser, function(req, res) {
     res.render('my_notes', {
       title: 'My Notes',
       notes: rows,
-      stringUtil: utils
+      utils: utils
     });
   });
 });
@@ -28,11 +28,22 @@ router.get('/', auth.isUser, function(req, res) {
 /* GET delete my note */
 router.get('/delete/:id', auth.isUser, function(req, res) {
   const note_id = req.params.id;
-  const deleteNoteQuery = `delete from notes where note_id = '${note_id}'`;
+
+  const deleteNoteQuery = `delete from notes where note_id = '${note_id}';`;
+  const deleteScheduleQuery = `delete from schedules where note_id = '${note_id}';`;
+  const deleteTagQuery = `delete from tags where note_id = '${note_id}';`;
+
   mysql_conn.query(deleteNoteQuery, function (err) {
     if (err) console.log(err);
 
-    res.redirect('/my_notes');
+    mysql_conn.query(deleteScheduleQuery, function (err) {
+      if (err) console.log(err);
+
+      mysql_conn.query(deleteTagQuery, function (err) {
+        if (err) console.log(err);
+        res.redirect('/my_notes');
+      });
+    });
   });
 });
 
@@ -95,9 +106,10 @@ router.post('/edit/:id', auth.isUser, function(req, res) {
 
     mysql_conn.query(updateScheduleQuery, function(err) {
       if (err) console.log(err);
-
-      res.redirect('/my_notes');
     });
+    updateTagsInNote(note_id, note_attributes.text);
+
+    res.redirect('/my_notes');
   });
 });
 
@@ -114,6 +126,71 @@ function getNonNullAttrQuery(nonNullAttrs) {
     }
   }
   return queryStrs.join(", ");
+}
+
+function updateTagsInNote(note_id, text) {
+  const newTags = utils.getTagsFromText(text);
+
+  const getTagsQuery = `select tag from tags where note_id = '${note_id}';`;
+  mysql_conn.query(getTagsQuery, function(err, rows) {
+    if (err) console.log(err);
+    console.log(newTags);
+    console.log(rows);
+
+    if (rows.length) {
+      let tagsToBeDeleted = [];
+      let tagsToBeAdded = [];
+
+      for (let i in newTags) {
+        let foundInOldTags = false;
+        for (let j in rows) {
+          if (newTags[i] === rows[j].tag) {
+            foundInOldTags = true;
+            break;
+          }
+        }
+        if (!foundInOldTags) tagsToBeAdded.push(newTags[i]);
+      }
+      console.log(tagsToBeAdded);
+
+      for (let j in rows) {
+        let foundInNewTags = false;
+        for (let i in newTags) {
+          if (newTags[i] === rows[j].tag) {
+            foundInNewTags = true;
+            break;
+          }
+        }
+        if (!foundInNewTags) tagsToBeDeleted.push(rows[j].tag);
+      }
+      console.log(tagsToBeDeleted);
+
+      if (tagsToBeAdded.length) {
+        const insertTagValues = tagsToBeAdded.map(tag => `('${tag}', '${note_id}')`);
+        const insertTagsQuery = `insert into tags (tag, note_id) values ${insertTagValues.join(', ')};`;
+        mysql_conn.query(insertTagsQuery, function(err) {
+          if (err) console.log(err);
+        });
+      }
+
+      if (tagsToBeDeleted.length) {
+        const deleteTagValues = tagsToBeDeleted.map(tag => `(tag = '${tag}' and note_id = '${note_id}')`);
+        const deleteTagsQuery = `delete from tags where ${deleteTagValues.join(' or ')};`;
+        mysql_conn.query(deleteTagsQuery, function(err) {
+          if (err) console.log(err);
+        });
+      }
+
+    } else {
+      const insertTagValues = utils.getTagsFromText(text).map(tag => `('${tag}', '${note_id}')`);
+      if (insertTagValues.length) {
+        const insertTagsQuery = `insert into tags (tag, note_id) values ${insertTagValues.join(', ')};`;
+        mysql_conn.query(insertTagsQuery, function(err) {
+          if (err) console.log(err);
+        });
+      }
+    }
+  });
 }
 
 

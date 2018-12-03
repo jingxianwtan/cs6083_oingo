@@ -15,7 +15,7 @@
     <tbody>
     <% notes.forEach(function(note) { %>
         <tr>
-            <td><%- stringUtil.textWithClickableTags(note.text) %></td>
+            <td><%- utils.textWithClickableTags(note.text) %></td>
             <td><%= note.timestamp %></td>
             <td><a href="/my_notes/edit/<%= note.note_id %>">Edit</a></td>
             <td><a class="confirmDeletion" href="/my_notes/delete/<%= note.note_id %>">Delete</a></td>

@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const mysql_conn = require('../models/MySqlConn');
-const StringUtil = require('../models/Utils');
+const Utils = require('../models/Utils');
 const auth = require('../config/auth');
+
+const utils = new Utils();
 
 /* GET tags by tag */
 router.get('/:tag', auth.isUser, function(req, res) {
@@ -20,7 +22,7 @@ router.get('/:tag', auth.isUser, function(req, res) {
     res.render('notes', {
       title: 'Notes',
       notes: rows,
-      stringUtil: new StringUtil()
+      utils: utils
     });
   });
 });

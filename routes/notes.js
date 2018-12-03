@@ -25,7 +25,7 @@ router.get('/', auth.isUser, function(req, res) {
     res.render('notes', {
       title: 'Notes',
       notes: rows,
-      stringUtil: utils
+      utils: utils
     });
   });
 });
@@ -84,7 +84,15 @@ router.post('/add-note', function(req, res) {
       title: 'Add Note',
       user: user,
       text: text,
-      radius: radius
+      radius: radius,
+      visibility: visibility,
+      start_time: startTime,
+      end_time: endTime,
+      start_date: startDate,
+      end_date: endDate,
+      frequency: frequency,
+      lat: lat,
+      lon: lon
     });
   } else {
     const note_id = uuid_v1();
@@ -97,7 +105,7 @@ router.post('/add-note', function(req, res) {
 
       insertSchedule(schedule, note_id);
 
-      const insertTagValues = getTagsFromText(text).map(tag => `('${tag}', '${note_id}')`);
+      const insertTagValues = utils.getTagsFromText(text).map(tag => `('${tag}', '${note_id}')`);
       if (!insertTagValues.length) {
         req.flash('success', 'A new note has been added!');
         res.redirect('/notes');
@@ -155,16 +163,6 @@ router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
   });
 });
 
-function getTagsFromText(text) {
-  const tagRegex = /(^|)#([\w]+)/gm;
-
-  let matches = [];
-  let match;
-  while (match = tagRegex.exec(text)) {
-    matches.push(match[2]);
-  }
-  return matches;
-}
 
 function insertSchedule(schedule, note_id) {
   const insertScheduleQuery = `insert into schedules (note_id, start_time, end_time, start_date, end_date, frequency) 

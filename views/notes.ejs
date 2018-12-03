@@ -15,7 +15,7 @@
     <tbody>
     <% notes.forEach(function(note) { %>
         <tr>
-            <td><%- stringUtil.textWithClickableTags(note.text) %></td>
+            <td><%- utils.textWithClickableTags(note.text) %></td>
             <td><%= note.username %></td>
             <td><%= note.timestamp %></td>
         </tr>
