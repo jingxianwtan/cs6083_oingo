@@ -88,6 +88,22 @@
         </select>
     </div>
 
+    <br><br>
+
+    <div class="form-group">
+        <label for="">Latitude</label>
+        <input type="text" class="form-control" name="lat" value="<%= lat %>">
+    </div>
+    <div class="form-group">
+        <label for="">Longitude</label>
+        <input type="text" class="form-control" name="lon" value="<%= lon %>">
+    </div>
+    <button class="btn btn-default" formaction="/notes/edit-geo/empire_state">Use Empire State Building</button>
+    <button class="btn btn-default" formaction="/notes/edit-geo/nyu_tandon">Use NYU Tandon</button>
+    <button class="btn btn-default" formaction="/notes/edit-geo/chelsea">Use Chelsea Market</button>
+
+    <br><br>
+
     <button class="btn btn-default">Submit</button>
 </form>
 <% include ./_layouts/footer %>

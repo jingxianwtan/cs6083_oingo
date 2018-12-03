@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const mysql_conn = require('../models/MySqlConn');
-const StringUtil = require('../models/StringUtil');
+const StringUtil = require('../models/Utils');
 const auth = require('../config/auth');
 
 /* GET tags by tag */

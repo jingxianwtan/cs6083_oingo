@@ -2,8 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 const mysql_conn = require('../models/MySqlConn');
-const StringUtil = require('../models/StringUtil');
+const Utils = require('../models/Utils');
 const auth = require('../config/auth');
+
+const utils = new Utils();
 
 /* GET my notes */
 router.get('/', auth.isUser, function(req, res) {
@@ -18,7 +20,7 @@ router.get('/', auth.isUser, function(req, res) {
     res.render('my_notes', {
       title: 'My Notes',
       notes: rows,
-      stringUtil: new StringUtil()
+      stringUtil: utils
     });
   });
 });
@@ -44,18 +46,21 @@ router.get('/edit/:id', auth.isUser, function(req, res) {
 
     const noteWithSchedule = rows[0];
     console.log(noteWithSchedule);
-    // console.log(getDateString(noteWithSchedule.end_date));
+    console.log(utils.getDateString(noteWithSchedule.start_date));
+    console.log(utils.getDateString(noteWithSchedule.end_date));
     res.render('edit_note', {
       title: 'Edit Notes',
       id: note_id,
       text: noteWithSchedule.text,
       radius: noteWithSchedule.radius,
       visibility: noteWithSchedule.visibility,
-      start_date: getDateString(noteWithSchedule.start_date),
-      end_date: getDateString(noteWithSchedule.end_date),
+      start_date: utils.getDateString(noteWithSchedule.start_date),
+      end_date: utils.getDateString(noteWithSchedule.end_date),
       start_time: noteWithSchedule.start_time,
       end_time: noteWithSchedule.end_time,
-      frequency: noteWithSchedule.frequency
+      frequency: noteWithSchedule.frequency,
+      lat: noteWithSchedule.lat,
+      lon: noteWithSchedule.lon
     });
   });
 });
@@ -64,21 +69,53 @@ router.get('/edit/:id', auth.isUser, function(req, res) {
 router.post('/edit/:id', auth.isUser, function(req, res) {
   const note_id = req.params.id;
 
-  const text = req.body.text;
+  const note_attributes = {
+    text: req.body.text,
+    radius: req.body.radius,
+    visibility: req.body.visibility,
+    lat: req.body.lat,
+    lon: req.body.lon
+  };
 
-  const updateNoteQuery = `update notes set 
-                            text = '${text}' 
-                            where note_id = '${note_id}';`;
+  const schedule_attributes = {
+    start_time: req.body.start_time,
+    end_time: req.body.end_time,
+    start_date: req.body.start_date,
+    end_date: req.body.end_date,
+    frequency: req.body.frequency,
+  };
+
+  const nonNullNoteQuery = getNonNullAttrQuery(utils.getNonNullAttributes(note_attributes));
+  const nonNullScheduleQuery = getNonNullAttrQuery(utils.getNonNullAttributes(schedule_attributes));
+
+  const updateNoteQuery = `update notes set ${nonNullNoteQuery} where note_id = '${note_id}';`;
+  const updateScheduleQuery = `update schedules set ${nonNullScheduleQuery} where note_id = '${note_id}';`;
   mysql_conn.query(updateNoteQuery, function (err) {
     if (err) console.log(err);
 
-    res.redirect('/my_notes');
+    mysql_conn.query(updateScheduleQuery, function(err) {
+      if (err) console.log(err);
+
+      res.redirect('/my_notes');
+    });
   });
 });
 
-function getDateString(datetime) {
-  return `${datetime.getFullYear()}-${datetime.getMonth() + 1}-${datetime.getDate()}`;
+
+function getNonNullAttrQuery(nonNullAttrs) {
+  let queryStrs = [];
+  for (let key in nonNullAttrs) {
+    if (nonNullAttrs.hasOwnProperty(key)) {
+      if (key === 'lat' || key === 'lon' || key === 'radius') {
+        queryStrs.push(`${key} = ${nonNullAttrs[key]}`);
+      } else {
+        queryStrs.push(`${key} = '${nonNullAttrs[key]}'`);
+      }
+    }
+  }
+  return queryStrs.join(", ");
 }
+
 
 // Exports
 module.exports = router;

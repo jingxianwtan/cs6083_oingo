@@ -1,10 +1,15 @@
-module.exports = function Schedule(startDate, endDate, startTime, endTime, frequency) {
-  const currDate = new Date();
+const Utils = require('./Utils');
+const utils = new Utils();
+
+module.exports = function Schedule(currDate, startDate, endDate, startTime, endTime, frequency) {
+  this.currDateTime = function getCurrDateTime() {
+    return utils.getDateTimeString(currDate);
+  };
 
   this.startDate = function getStartDate() {
     if (!startDate || startDate.isBefore(currDate)) {
-      const dayOfMonth = prettyPrint(currDate.getDate());
-      const month = prettyPrint(currDate.getMonth() + 1);
+      const dayOfMonth = utils.prettyPrint(currDate.getDate());
+      const month = utils.prettyPrint(currDate.getMonth() + 1);
       return `${currDate.getFullYear()}-${month}-${dayOfMonth}`;
     } else {
       return startDate;
@@ -21,8 +26,8 @@ module.exports = function Schedule(startDate, endDate, startTime, endTime, frequ
 
   this.startTime = function getStartTime() {
     if (!startTime) {
-      const hour = prettyPrint(currDate.getHours());
-      const minute = prettyPrint(currDate.getMinutes());
+      const hour = utils.prettyPrint(currDate.getHours());
+      const minute = utils.prettyPrint(currDate.getMinutes());
       return `${hour}:${minute}`
     } else {
       return startTime;
@@ -40,13 +45,6 @@ module.exports = function Schedule(startDate, endDate, startTime, endTime, frequ
   this.frequency = frequency;
 };
 
-function prettyPrint(number) {
-  if (number < 10) {
-    return `0${number}`;
-  } else {
-    return `${number}`;
-  }
-}
 
 // { text: 'This is a note of #food2',
 //   radius: '100',

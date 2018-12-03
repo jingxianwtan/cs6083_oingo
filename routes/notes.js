@@ -3,9 +3,11 @@ const express = require('express');
 const router = express.Router();
 
 const mysql_conn = require('../models/MySqlConn');
-const StringUtil = require('../models/StringUtil');
+const Utils = require('../models/Utils');
 const Schedule = require('../models/Schedule');
 const auth = require('../config/auth');
+
+const utils = new Utils();
 
 /* GET notes index */
 router.get('/', auth.isUser, function(req, res) {
@@ -23,7 +25,7 @@ router.get('/', auth.isUser, function(req, res) {
     res.render('notes', {
       title: 'Notes',
       notes: rows,
-      stringUtil: new StringUtil()
+      stringUtil: utils
     });
   });
 });
@@ -31,7 +33,17 @@ router.get('/', auth.isUser, function(req, res) {
 /* GET add note */
 router.get('/add-note', auth.isUser, function(req, res) {
   res.render('add_note', {
-    title: 'Add Note'
+    title: 'Add Note',
+    text: "",
+    radius: "",
+    visibility: "",
+    start_time: "",
+    end_time: "",
+    start_date: "",
+    end_date: "",
+    frequency: "",
+    lat: "",
+    lon: ""
   });
 });
 
@@ -53,8 +65,12 @@ router.post('/add-note', function(req, res) {
   const startDate = req.body.start_date;
   const endDate = req.body.end_date;
   const frequency = req.body.frequency;
+  const lat = req.body.lat;
+  const lon = req.body.lon;
+  const currDateTime = new Date();
+  console.log(currDateTime);
 
-  const schedule = new Schedule(startDate, endDate, startTime, endTime, frequency);
+  const schedule = new Schedule(currDateTime, startDate, endDate, startTime, endTime, frequency);
   console.log(schedule.startDate());
   console.log(schedule.startTime());
 
@@ -73,7 +89,8 @@ router.post('/add-note', function(req, res) {
   } else {
     const note_id = uuid_v1();
     const insertUserQuery = `insert into notes (note_id, user_id, text, lat, lon, timestamp, radius, visibility)
-                      values ('${note_id}', ${user.user_id},'${text}','lat','long','2018-11-19 12:00:00', ${radius}, '${visibility}');`;
+                            values ('${note_id}', ${user.user_id},'${text}','${lat}','${lon}',
+                                    '${schedule.currDateTime()}', ${radius}, '${visibility}');`;
     mysql_conn.query(insertUserQuery, function(err) {
       console.log("here1");
       if (err) console.log(err);
@@ -96,6 +113,46 @@ router.post('/add-note', function(req, res) {
       }
     });
   }
+});
+
+/* POST edit geo */
+router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
+  const user = req.user;
+
+  const location = req.params.loc;
+
+  const text = req.body.text;
+  const radius = req.body.radius;
+  const visibility = req.body.visibility;
+
+  const startTime = req.body.start_time;
+  const endTime = req.body.end_time;
+  const startDate = req.body.start_date;
+  const endDate = req.body.end_date;
+  const frequency = req.body.frequency;
+
+  const geoLocations = {
+    'empire_state': [40.748440, -73.985664],
+    'nyu_tandon': [40.693710, -73.987221],
+    'chelsea': [40.742451, -74.005959]
+  };
+
+  console.log(geoLocations[location]);
+
+  res.render('add_note', {
+    title: 'Add Note',
+    user: user,
+    text: text,
+    radius: radius,
+    visibility: visibility,
+    start_time: startTime,
+    end_time: endTime,
+    start_date: utils.getDateString(startDate),
+    end_date: utils.getDateString(endDate),
+    frequency: frequency,
+    lat: geoLocations[location][0],
+    lon: geoLocations[location][1]
+  });
 });
 
 function getTagsFromText(text) {
