@@ -1,23 +1,24 @@
 <% include ./_layouts/header %>
-<h2 class="page-title">Notes</h2>
+<h2 class="page-title">My Notes</h2>
 <a href="/notes/add-note" class="btn btn-primary">Add a new note</a>
-<a href="/my_notes" class="btn btn-primary">My notes</a>
 <br><br>
 
 <table class="table table-striped sorting">
     <thead>
     <tr>
         <th>Text</th>
-        <th>Posted By</th>
         <th>Post Time</th>
+        <th>Edit</th>
+        <th>Delete</th>
     </tr>
     </thead>
     <tbody>
     <% notes.forEach(function(note) { %>
         <tr>
             <td><%- stringUtil.textWithClickableTags(note.text) %></td>
-            <td><%= note.username %></td>
             <td><%= note.timestamp %></td>
+            <td><a href="/my_notes/edit/<%= note.note_id %>">Edit</a></td>
+            <td><a class="confirmDeletion" href="/my_notes/delete/<%= note.note_id %>">Delete</a></td>
         </tr>
     <% }); %>
     </tbody>

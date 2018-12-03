@@ -9,8 +9,14 @@ const auth = require('../config/auth');
 
 /* GET notes index */
 router.get('/', auth.isUser, function(req, res) {
-  const notesByUserQuery = `select note_id, username, text, timestamp from 
-                            notes join users on notes.user_id = users.user_id;`;
+  const notesByUserQuery = `select text, username, timestamp from
+                              (select text, notes.user_id, timestamp from
+                                (select friend_id from friendships where user_id = '1') as my_friends
+                              right join notes on notes.user_id = my_friends.friend_id
+                              where visibility = 'everyone' 
+                                or (visibility = 'friends' and friend_id is not null) 
+                                or notes.user_id = '1') as notes_visible
+                            join users on notes_visible.user_id = users.user_id;`;
   mysql_conn.query(notesByUserQuery, function (err, rows) {
     if (err) console.log(err);
 

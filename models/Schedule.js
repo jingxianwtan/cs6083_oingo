@@ -2,7 +2,7 @@ module.exports = function Schedule(startDate, endDate, startTime, endTime, frequ
   const currDate = new Date();
 
   this.startDate = function getStartDate() {
-    if (!startDate) {
+    if (!startDate || startDate.isBefore(currDate)) {
       const dayOfMonth = prettyPrint(currDate.getDate());
       const month = prettyPrint(currDate.getMonth() + 1);
       return `${currDate.getFullYear()}-${month}-${dayOfMonth}`;
@@ -12,7 +12,7 @@ module.exports = function Schedule(startDate, endDate, startTime, endTime, frequ
   };
 
   this.endDate = function getEndDate() {
-    if (!endDate) {
+    if (!endDate || endDate.isBefore(currDate)) {
       return `9999-12-31`;
     } else {
       return endDate;
