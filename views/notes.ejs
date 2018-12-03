@@ -7,8 +7,7 @@
     <thead>
     <tr>
         <th>Text</th>
-        <th>Posted By User Id</th>
-        <th>Radius</th>
+        <th>Posted By</th>
         <th>Post Time</th>
     </tr>
     </thead>
@@ -16,8 +15,7 @@
     <% notes.forEach(function(note) { %>
         <tr>
             <td><%- stringUtil.textWithClickableTags(note.text) %></td>
-            <td><%= note.user_id %></td>
-            <td><%= note.radius %></td>
+            <td><%= note.username %></td>
             <td><%= note.timestamp %></td>
         </tr>
     <% }); %>

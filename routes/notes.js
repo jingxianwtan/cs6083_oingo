@@ -1,5 +1,5 @@
-const express = require('express');
 const uuid_v1 = require('uuid/v1'); // timestamp based uuid
+const express = require('express');
 const router = express.Router();
 
 const mysql_conn = require('../models/MySqlConn');
@@ -9,7 +9,9 @@ const auth = require('../config/auth');
 
 /* GET notes index */
 router.get('/', auth.isUser, function(req, res) {
-  mysql_conn.query('select * from notes', function (err, rows) {
+  const notesByUserQuery = `select note_id, username, text, timestamp from 
+                            notes join users on notes.user_id = users.user_id;`;
+  mysql_conn.query(notesByUserQuery, function (err, rows) {
     if (err) console.log(err);
 
     res.render('notes', {

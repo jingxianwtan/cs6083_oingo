@@ -79,12 +79,14 @@ app.get('*', function(req, res, next) {
 const pages = require('./routes/pages.js');
 const users = require('./routes/users.js');
 const notes = require('./routes/notes.js');
+const tags = require('./routes/tags.js');
 const friends = require('./routes/friends');
 const everyone = require('./routes/everyone');
 
 app.use('/', pages);
 app.use('/users', users);
 app.use('/notes', notes);
+app.use('/tags', tags);
 app.use('/friends', friends);
 app.use('/everyone', everyone);
 
