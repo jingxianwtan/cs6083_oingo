@@ -1,0 +1,31 @@
+<% include ./_layouts/header %>
+<h2 class="page-title">States</h2>
+<a href="/my_states/add" class="btn btn-primary">Add a new state</a>
+<br><br>
+
+<table class="table table-striped sorting">
+    <thead>
+    <tr>
+        <th>StateName</th>
+        <th>Allowed Tags</th>
+        <th>Allowed Keywords</th>
+        <th>Posted By</th>
+        <th>Edit</th>
+        <th>Delete</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% states.forEach(function(state) { %>
+        <tr>
+            <td><%= state.name %></td>
+            <td><%= state.tags %></td>
+            <td><%= state.keywords %></td>
+            <td><%= state.post_by %></td>
+            <td><a href="/my_states/edit/<%= state.state_id %>">Edit</a></td>
+            <td><a class="confirmDeletion" href="/my_states/delete/<%= state.state_id %>">Delete</a></td>
+        </tr>
+    <% }); %>
+    </tbody>
+</table>
+
+<% include ./_layouts/footer %>

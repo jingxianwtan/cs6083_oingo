@@ -83,15 +83,16 @@ const myNotes = require('./routes/my_notes.js');
 const tags = require('./routes/tags.js');
 const friends = require('./routes/friends');
 const everyone = require('./routes/everyone');
+const myStates = require('./routes/my_states');
 
 app.use('/', pages);
 app.use('/users', users);
 app.use('/notes', notes);
 app.use('/my_notes', myNotes);
-app.use('/tags', tags);
+app.use('/getTags', tags);
 app.use('/friends', friends);
 app.use('/everyone', everyone);
-
+app.use('/my_states', myStates);
 
 // Test sql
 // mysql_conn.query(`select * from users where username = 'williamtan'`, function (err, rows) {

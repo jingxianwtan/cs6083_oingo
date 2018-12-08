@@ -2,6 +2,23 @@
 <h2 class="page-title">Notes</h2>
 <a href="/notes/add-note" class="btn btn-primary">Add a new note</a>
 <a href="/my_notes" class="btn btn-primary">My notes</a>
+
+<br><br>
+
+<form method="post" action="/my_states/set-current">
+    <select name="currState">
+        <option value="default">Default</option>
+        <% myStates.forEach(function(state) { %>
+            <% if (currState === state.name) { %>
+                <option selected="selected" value="<%= state.name %>"><%= state.name %></option>
+            <% } else { %>
+                <option value="<%= state.name %>"><%= state.name %></option>
+            <% } %>
+        <% }) %>
+    </select>
+    <button class="btn btn-default">Set State</button>
+</form>
+
 <br><br>
 
 <table class="table table-striped sorting">

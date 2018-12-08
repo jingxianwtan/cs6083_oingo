@@ -5,27 +5,68 @@ const router = express.Router();
 const mysql_conn = require('../models/MySqlConn');
 const Utils = require('../models/Utils');
 const Schedule = require('../models/Schedule');
+const State = require('../models/State');
+const Filter = require('../models/Filter');
 const auth = require('../config/auth');
 
 const utils = new Utils();
 
 /* GET notes index */
 router.get('/', auth.isUser, function(req, res) {
-  const notesByUserQuery = `select text, username, timestamp from
+  const user = req.user;
+  const currState = getCurrState(req.query.currState);
+
+  const currStatesQuery = `select * from states where user_id = ${user.user_id} and name = '${currState}';`;
+  const allMyStatesQuery = `select * from states where user_id = ${user.user_id};`;
+  const notesByUserQuery = `select text, notes_visible.user_id, username, timestamp from
                               (select text, notes.user_id, timestamp from
-                                (select friend_id from friendships where user_id = '1') as my_friends
+                                (select friend_id from friendships where user_id = '${user.user_id}') as my_friends
                               right join notes on notes.user_id = my_friends.friend_id
                               where visibility = 'everyone' 
                                 or (visibility = 'friends' and friend_id is not null) 
-                                or notes.user_id = '1') as notes_visible
-                            join users on notes_visible.user_id = users.user_id;`;
-  mysql_conn.query(notesByUserQuery, function (err, rows) {
+                                or notes.user_id = '${user.user_id}') as notes_visible
+                            join users on notes_visible.user_id = users.user_id`;
+
+
+  const notesByUserQuery2 = `select * from
+                              (select text, notes_visible.user_id, username, timestamp, 69.0 * degrees(acos(
+                                          least(cos(radians(notes_visible.lat)) * cos(radians(my_loc.curr_lat)) 
+                                                  * cos(radians(notes_visible.lon - my_loc.curr_lon))
+                                                  + sin(radians(notes_visible.lat)) * sin(radians(my_loc.curr_lat)), 
+                                                1.0))) as dist_in_mile, radius from
+                                (select text, notes.user_id, timestamp, lat, lon, radius from
+                                  (select friend_id from friendships where user_id = '${user.user_id}') as my_friends
+                                  right join notes on notes.user_id = my_friends.friend_id
+                                  where visibility = 'everyone' 
+                                    or (visibility = 'friends' and friend_id is not null) 
+                                    or notes.user_id = '${user.user_id}') as notes_visible
+                              join 
+                              (select curr_lat, curr_lon from user_locations where user_id = '${user.user_id}') as my_loc
+                              join users on notes_visible.user_id = users.user_id) as notes_visible_within_radius
+	                          where dist_in_mile < radius`;
+
+  mysql_conn.query(currStatesQuery, function (err, currStates) {
     if (err) console.log(err);
 
-    res.render('notes', {
-      title: 'Notes',
-      notes: rows,
-      utils: utils
+    const state = new State(currStates[0]);
+    const filter = new Filter(state.getTags(), state.getKeywords(), state.getWithinRadius(), state.getPostBy(), user);
+    const filtersQuery = filter.getFiltersQuery();
+
+    const notesByUserStateQuery = `${notesByUserQuery2}${filtersQuery};`;
+    console.log(notesByUserStateQuery);
+
+    mysql_conn.query(notesByUserStateQuery, function (err, notes) {
+      if (err) console.log(err);
+
+      mysql_conn.query(allMyStatesQuery, function (err, myStates) {
+        res.render('notes', {
+          title: 'Notes',
+          notes: notes,
+          currState: currState,
+          myStates: myStates,
+          utils: utils
+        });
+      });
     });
   });
 });
@@ -50,6 +91,7 @@ router.get('/add-note', auth.isUser, function(req, res) {
 /* POST add note */
 router.post('/add-note', function(req, res) {
   const user = req.user;
+  console.log("debug msg");
 
   req.checkBody("text", "Note text cannot be empty").notEmpty();
   req.checkBody("visibility", "Visibility must be defined").notEmpty();
@@ -97,7 +139,7 @@ router.post('/add-note', function(req, res) {
   } else {
     const note_id = uuid_v1();
     const insertUserQuery = `insert into notes (note_id, user_id, text, lat, lon, timestamp, radius, visibility)
-                            values ('${note_id}', ${user.user_id},'${text}','${lat}','${lon}',
+                            values ('${note_id}', ${user.user_id},'${text}', ${lat}, ${lon},
                                     '${schedule.currDateTime()}', ${radius}, '${visibility}');`;
     mysql_conn.query(insertUserQuery, function(err) {
       console.log("here1");
@@ -172,6 +214,23 @@ function insertSchedule(schedule, note_id) {
     console.log("here3");
     if (err) console.log(err);
   });
+}
+
+function getCurrState(currStateFromReq) {
+  if (currStateFromReq == null || currStateFromReq === 'undefined') {
+    return 'default';
+  } else {
+    return currStateFromReq;
+  }
+}
+
+function calcDistanceQuery() {
+  `69.0 *
+  DEGREES(ACOS(LEAST(COS(RADIANS(notes_visible.lat))
+    * COS(RADIANS(my_loc.lat))
+    * COS(RADIANS(notes_visible.lon - my_loc.lon))
+    + SIN(RADIANS(notes_visible.lat))
+    * SIN(RADIANS(my_loc.lat)), 1.0)))`;
 }
 
 // Exports

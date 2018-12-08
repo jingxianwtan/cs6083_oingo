@@ -1,5 +1,5 @@
 {
-  "name": "cs6083_oingo",
+  "getName": "cs6083_oingo",
   "version": "1.0.0",
   "description": "Project for CS6083 Fall2018",
   "main": "app.js",
@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/jingxianwtan/cs6083_oingo.git"
   },
-  "keywords": [
+  "getKeywords": [
     "cs6083",
     "oingo"
   ],

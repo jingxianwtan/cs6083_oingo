@@ -7,7 +7,7 @@ const auth = require('../config/auth');
 
 const utils = new Utils();
 
-/* GET tags by tag */
+/* GET getTags by tag */
 router.get('/:tag', auth.isUser, function(req, res) {
   const tag = req.params.tag;
 
