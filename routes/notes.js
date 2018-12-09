@@ -15,35 +15,55 @@ const utils = new Utils();
 router.get('/', auth.isUser, function(req, res) {
   const user = req.user;
   const currState = getCurrState(req.query.currState);
+  let currDateTime = new Date();
+  // update user curr time;
+  // manually set user curr time;
+
+  const currTime = utils.getTimeOfDay(currDateTime);
+  const currDate = utils.getDateString(currDateTime);
+
+
 
   const currStatesQuery = `select * from states where user_id = ${user.user_id} and name = '${currState}';`;
   const allMyStatesQuery = `select * from states where user_id = ${user.user_id};`;
-  const notesByUserQuery = `select text, notes_visible.user_id, username, timestamp from
-                              (select text, notes.user_id, timestamp from
-                                (select friend_id from friendships where user_id = '${user.user_id}') as my_friends
-                              right join notes on notes.user_id = my_friends.friend_id
-                              where visibility = 'everyone' 
-                                or (visibility = 'friends' and friend_id is not null) 
-                                or notes.user_id = '${user.user_id}') as notes_visible
-                            join users on notes_visible.user_id = users.user_id`;
-
-
+  const visibilityQuery = `(  (visibility = 'everyone')
+                              or (visibility = 'friends' and friend_id is not null) 
+                              or (notes.user_id = '${user.user_id}')  )`;
+  const frequencyQuery = `( (frequency = 'daily' 
+                                and start_date <= '${currDate}' and end_date >= '${currDate}'
+                                and start_time <= '${currTime}' and end_time >= '${currTime}')
+                            or (frequency = 'weekly' 
+                                and start_date <= '${currDate}' and end_date >= '${currDate}' 
+                                and start_time <= '${currTime}' and end_time >= '${currTime}'
+                                and mod(timestampdiff(day, start_date, '2018-12-09'), 7) = 0)
+                            or (frequency = 'monthly'
+                                and start_date <= '${currDate}' and end_date >= '${currDate}' 
+                                and start_time <= '${currTime}' and end_time >= '${currTime}' 
+                                and dayofmonth(start_date) = ${currDateTime.getDate()})
+                            or (frequency = 'annual' 
+                                and start_date <= '${currDate}' and end_date >= '${currDate}'
+                                and start_time <= '${currTime}' and end_time >= '${currTime}'
+                                and month(start_date) = ${currDateTime.getMonth() + 1} 
+                                and dayofmonth(start_date) = ${currDateTime.getDate()}) )`;
+  // Need to add start_date and end_date range
   const notesByUserQuery2 = `select * from
                               (select text, notes_visible.user_id, username, timestamp, 69.0 * degrees(acos(
                                           least(cos(radians(notes_visible.lat)) * cos(radians(my_loc.curr_lat)) 
                                                   * cos(radians(notes_visible.lon - my_loc.curr_lon))
                                                   + sin(radians(notes_visible.lat)) * sin(radians(my_loc.curr_lat)), 
                                                 1.0))) as dist_in_mile, radius from
-                                (select text, notes.user_id, timestamp, lat, lon, radius from
+                                (select text, notes.user_id, timestamp, lat, lon, radius, start_date, end_date, start_time, end_time, frequency from
                                   (select friend_id from friendships where user_id = '${user.user_id}') as my_friends
                                   right join notes on notes.user_id = my_friends.friend_id
-                                  where visibility = 'everyone' 
-                                    or (visibility = 'friends' and friend_id is not null) 
-                                    or notes.user_id = '${user.user_id}') as notes_visible
+                                  join schedules on notes.note_id = schedules.note_id
+                                  where ${visibilityQuery}
+                                  and 
+                                  ${frequencyQuery}) as notes_visible
                               join 
                               (select curr_lat, curr_lon from user_locations where user_id = '${user.user_id}') as my_loc
                               join users on notes_visible.user_id = users.user_id) as notes_visible_within_radius
-	                          where dist_in_mile < radius`;
+	                          where dist_in_mile <= radius`;
+  console.log(notesByUserQuery2);
 
   mysql_conn.query(currStatesQuery, function (err, currStates) {
     if (err) console.log(err);
@@ -53,7 +73,6 @@ router.get('/', auth.isUser, function(req, res) {
     const filtersQuery = filter.getFiltersQuery();
 
     const notesByUserStateQuery = `${notesByUserQuery2}${filtersQuery};`;
-    console.log(notesByUserStateQuery);
 
     mysql_conn.query(notesByUserStateQuery, function (err, notes) {
       if (err) console.log(err);
@@ -110,7 +129,6 @@ router.post('/add-note', function(req, res) {
   const lat = req.body.lat;
   const lon = req.body.lon;
   const currDateTime = new Date();
-  console.log(currDateTime);
 
   const schedule = new Schedule(currDateTime, startDate, endDate, startTime, endTime, frequency);
   console.log(schedule.startDate());
@@ -142,7 +160,6 @@ router.post('/add-note', function(req, res) {
                             values ('${note_id}', ${user.user_id},'${text}', ${lat}, ${lon},
                                     '${schedule.currDateTime()}', ${radius}, '${visibility}');`;
     mysql_conn.query(insertUserQuery, function(err) {
-      console.log("here1");
       if (err) console.log(err);
 
       insertSchedule(schedule, note_id);
@@ -154,7 +171,6 @@ router.post('/add-note', function(req, res) {
       } else {
         const insertTagQuery = `insert into tags (tag, note_id) values ${insertTagValues.join(', ')};`;
         mysql_conn.query(insertTagQuery, function(err) {
-          console.log("here2");
           if (err) console.log(err);
 
           req.flash('success', 'A new note has been added!');
@@ -180,6 +196,7 @@ router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
   const startDate = req.body.start_date;
   const endDate = req.body.end_date;
   const frequency = req.body.frequency;
+  console.log(frequency);
 
   const geoLocations = {
     'empire_state': [40.748440, -73.985664],
@@ -209,9 +226,8 @@ router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
 function insertSchedule(schedule, note_id) {
   const insertScheduleQuery = `insert into schedules (note_id, start_time, end_time, start_date, end_date, frequency) 
                               values ('${note_id}', '${schedule.startTime()}', '${schedule.endTime()}', 
-                              '${schedule.startDate()}', '${schedule.endDate()}', '${schedule.frequency}');`;
+                              '${schedule.startDate()}', '${schedule.endDate()}', '${schedule.frequency()}');`;
   mysql_conn.query(insertScheduleQuery, function(err) {
-    console.log("here3");
     if (err) console.log(err);
   });
 }

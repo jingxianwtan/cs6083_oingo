@@ -26,9 +26,7 @@ module.exports = function Schedule(currDate, startDate, endDate, startTime, endT
 
   this.startTime = function getStartTime() {
     if (!startTime) {
-      const hour = utils.prettyPrint(currDate.getHours());
-      const minute = utils.prettyPrint(currDate.getMinutes());
-      return `${hour}:${minute}`
+      return `00:00`;
     } else {
       return startTime;
     }
@@ -42,7 +40,9 @@ module.exports = function Schedule(currDate, startDate, endDate, startTime, endT
     }
   };
 
-  this.frequency = frequency;
+  this.frequency = function getFrequency() {
+    return frequency;
+  }
 };
 
 

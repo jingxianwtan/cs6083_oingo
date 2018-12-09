@@ -54,5 +54,13 @@ module.exports = function Utils() {
       }
     }
     return nonNull;
-  }
+  };
+
+  this.getTimeOfDay = function getTimeOfDay(datetime) {
+    const hours = this.prettyPrint(datetime.getHours());
+    const minutes = this.prettyPrint(datetime.getMinutes());
+    const seconds = this.prettyPrint(datetime.getSeconds());
+
+    return `${hours}:${minutes}:${seconds}`;
+  };
 };
