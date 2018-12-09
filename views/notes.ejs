@@ -19,6 +19,14 @@
     <button class="btn btn-default">Set State</button>
 </form>
 
+<form>
+    <label for="">Your default current location is at {lat: 40.7539278, lon: -73.9865007}.</label>
+    <input type="text" class="form-control" name="currLat" value="<%= currLat %>">
+    <input type="text" class="form-control" name="currLon" value="<%= currLon %>">
+    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_location/custom/<%= currState %>">Set A Different Current Location</button>
+    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_location/default/<%= currState %>">Set Default Current Location</button>
+</form>
+
 <br><br>
 
 <table class="table table-striped sorting">

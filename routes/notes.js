@@ -15,17 +15,21 @@ const utils = new Utils();
 router.get('/', auth.isUser, function(req, res) {
   const user = req.user;
   const currState = getCurrState(req.query.currState);
+  const currLocation = getCurrLocation(req.query.currLat, req.query.currLon);
   let currDateTime = new Date();
-  // update user curr time;
-  // manually set user curr time;
+  // TODO: update user curr time;
+  // TODO: manually set user curr time;
 
   const currTime = utils.getTimeOfDay(currDateTime);
   const currDate = utils.getDateString(currDateTime);
 
-
-
   const currStatesQuery = `select * from states where user_id = ${user.user_id} and name = '${currState}';`;
   const allMyStatesQuery = `select * from states where user_id = ${user.user_id};`;
+  const calcDistanceQuery = `69.0 * degrees(acos(least(
+                              cos(radians(notes_visible.lat)) * cos(radians(my_loc.curr_lat)) 
+                                * cos(radians(notes_visible.lon - my_loc.curr_lon))
+                                + sin(radians(notes_visible.lat)) * sin(radians(my_loc.curr_lat)),
+                              1.0)))`;
   const visibilityQuery = `(  (visibility = 'everyone')
                               or (visibility = 'friends' and friend_id is not null) 
                               or (notes.user_id = '${user.user_id}')  )`;
@@ -47,11 +51,7 @@ router.get('/', auth.isUser, function(req, res) {
                                 and dayofmonth(start_date) = ${currDateTime.getDate()}) )`;
   // Need to add start_date and end_date range
   const notesByUserQuery2 = `select * from
-                              (select text, notes_visible.user_id, username, timestamp, 69.0 * degrees(acos(
-                                          least(cos(radians(notes_visible.lat)) * cos(radians(my_loc.curr_lat)) 
-                                                  * cos(radians(notes_visible.lon - my_loc.curr_lon))
-                                                  + sin(radians(notes_visible.lat)) * sin(radians(my_loc.curr_lat)), 
-                                                1.0))) as dist_in_mile, radius from
+                              (select text, notes_visible.user_id, username, timestamp, ${calcDistanceQuery} as dist_in_mile, radius from
                                 (select text, notes.user_id, timestamp, lat, lon, radius, start_date, end_date, start_time, end_time, frequency from
                                   (select friend_id from friendships where user_id = '${user.user_id}') as my_friends
                                   right join notes on notes.user_id = my_friends.friend_id
@@ -63,7 +63,9 @@ router.get('/', auth.isUser, function(req, res) {
                               (select curr_lat, curr_lon from user_locations where user_id = '${user.user_id}') as my_loc
                               join users on notes_visible.user_id = users.user_id) as notes_visible_within_radius
 	                          where dist_in_mile <= radius`;
-  console.log(notesByUserQuery2);
+  // console.log(notesByUserQuery2);
+
+  setUserLocation(user, utils.getDateTimeString(currDateTime), currLocation.lat, currLocation.lon);
 
   mysql_conn.query(currStatesQuery, function (err, currStates) {
     if (err) console.log(err);
@@ -83,6 +85,8 @@ router.get('/', auth.isUser, function(req, res) {
           notes: notes,
           currState: currState,
           myStates: myStates,
+          currLat: currLocation.lat,
+          currLon: currLocation.lon,
           utils: utils
         });
       });
@@ -222,6 +226,26 @@ router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
   });
 });
 
+/* POST set user current location */
+router.post('/curr_location/:mode/:currState', auth.isUser, function(req, res) {
+  const user = req.user;
+  const currState = req.params.currState;
+  const mode = req.params.mode;
+  const currLat = req.body.currLat;
+  const currLon = req.body.currLon;
+  console.log(currLat);
+  console.log(currLon);
+  const currDateTime = new Date();
+
+  if (mode === "custom") {
+    setUserLocation(user, utils.getDateTimeString(currDateTime), currLat, currLon);
+    res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}`);
+  } else { // mode === "default"
+    setUserLocation(user, utils.getDateTimeString(currDateTime), 40.7539278, -73.9865007);
+    res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
+  }
+});
+
 
 function insertSchedule(schedule, note_id) {
   const insertScheduleQuery = `insert into schedules (note_id, start_time, end_time, start_date, end_date, frequency) 
@@ -240,13 +264,34 @@ function getCurrState(currStateFromReq) {
   }
 }
 
-function calcDistanceQuery() {
-  `69.0 *
-  DEGREES(ACOS(LEAST(COS(RADIANS(notes_visible.lat))
-    * COS(RADIANS(my_loc.lat))
-    * COS(RADIANS(notes_visible.lon - my_loc.lon))
-    + SIN(RADIANS(notes_visible.lat))
-    * SIN(RADIANS(my_loc.lat)), 1.0)))`;
+function getCurrLocation(currLat, currLon) {
+  if (currLat === undefined || currLon === undefined) {
+    return {lat: 40.7539278, lon: -73.9865007};
+  } else {
+    return {lat: currLat, lon: currLon};
+  }
+}
+
+function setUserLocation(user, currTime, currLat, currLon) {
+  const checkCurrLocQuery = `select * from user_locations where user_id = '${user.user_id}';`;
+  const insertCurrLocQuery = `insert user_locations (user_id, curr_Time, curr_lat, curr_lon) values
+                              ('${user.user_id}', '${currTime}', ${currLat}, ${currLon});`;
+  const updateCurrLocQuery = `update user_locations set
+                              curr_time = '${currTime}', curr_lat = ${currLat}, curr_lon = ${currLon}
+                              where user_id = '${user.user_id}';`;
+  mysql_conn.query(checkCurrLocQuery, function(err, rows) {
+    if (err) console.log(err);
+
+    if (rows.length) {
+      mysql_conn.query(updateCurrLocQuery, function (err) {
+        if (err) console.log(err);
+      });
+    } else {
+      mysql_conn.query(insertCurrLocQuery, function (err) {
+        if (err) console.log(err);
+      });
+    }
+  });
 }
 
 // Exports
