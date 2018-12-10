@@ -1,0 +1,26 @@
+<% include ./_layouts/header %>
+<br><br>
+<h2 class="page-title">Notes by <%= username %></h2>
+
+<br><br>
+
+<table class="table table-striped sorting">
+    <thead>
+    <tr>
+        <th>Text</th>
+        <th>Post Time</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <% notes.forEach(function(note) { %>
+        <tr>
+            <td><%- `${utils.clickableUserName(note.username)}: ${utils.textWithClickableTags(note.text)}` %></td>
+            <td><%= note.timestamp %></td>
+            <td><a href="/notes/<%= note.note_id %>/reply">Reply</a></td>
+        </tr>
+    <% }); %>
+    </tbody>
+</table>
+
+<% include ./_layouts/footer %>

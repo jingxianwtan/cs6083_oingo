@@ -60,10 +60,10 @@
     <div class="form-group">
         <label for="">Frequency</label>
         <select class="form-control" name="frequency" >
-            <% if (frequency == 'once') { %>
-                <option selected="selected" value="once">Just Once</option>
+            <% if (frequency == 'once_today') { %>
+                <option selected="selected" value="once_today">Just Once Today</option>
             <% } else { %>
-                <option value="once">Just Once</option>
+                <option value="once_today">Just Once Today</option>
             <% } %>
             <% if (frequency == 'daily') { %>
                 <option selected="selected" value="daily">Every Day</option>

@@ -16,9 +16,9 @@ router.get('/', auth.isUser, function(req, res) {
   const user = req.user;
   const currState = getCurrState(req.query.currState);
   const currLocation = getCurrLocation(req.query.currLat, req.query.currLon);
-  let currDateTime = new Date();
-  // TODO: update user curr time;
-  // TODO: manually set user curr time;
+  const currDateTime = getCurrTime(req.query.currDateTime);
+
+  // setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime));
 
   const currTime = utils.getTimeOfDay(currDateTime);
   const currDate = utils.getDateString(currDateTime);
@@ -33,7 +33,10 @@ router.get('/', auth.isUser, function(req, res) {
   const visibilityQuery = `(  (visibility = 'everyone')
                               or (visibility = 'friends' and friend_id is not null) 
                               or (notes.user_id = '${user.user_id}')  )`;
-  const frequencyQuery = `( (frequency = 'daily' 
+  const frequencyQuery = `( (frequency = 'once_today' 
+                                and date(timestamp) = '${currDate}'
+                                and start_time <= '${currTime}' and end_time >= '${currTime}')
+                            or (frequency = 'daily' 
                                 and start_date <= '${currDate}' and end_date >= '${currDate}'
                                 and start_time <= '${currTime}' and end_time >= '${currTime}')
                             or (frequency = 'weekly' 
@@ -49,40 +52,57 @@ router.get('/', auth.isUser, function(req, res) {
                                 and start_time <= '${currTime}' and end_time >= '${currTime}'
                                 and month(start_date) = ${currDateTime.getMonth() + 1} 
                                 and dayofmonth(start_date) = ${currDateTime.getDate()}) )`;
-  // Need to add start_date and end_date range
-  const notesByUserQuery2 = `select * from
-                              (select text, notes_visible.user_id, username, timestamp, ${calcDistanceQuery} as dist_in_mile, radius from
-                                (select text, notes.user_id, timestamp, lat, lon, radius, start_date, end_date, start_time, end_time, frequency from
-                                  (select friend_id from friendships where user_id = '${user.user_id}') as my_friends
+  const getMyFriendsQuery = `select friend_id from friendships where user_id = '${user.user_id}'`;
+  const getMyLocationQuery = `select curr_lat, curr_lon from user_locations where user_id = '${user.user_id}'`;
+  const getVisibleNotesQuery = `select * from
+                                  (${getMyFriendsQuery}) as my_friends
                                   right join notes on notes.user_id = my_friends.friend_id
-                                  join schedules on notes.note_id = schedules.note_id
+                                  natural join schedules
                                   where ${visibilityQuery}
                                   and 
-                                  ${frequencyQuery}) as notes_visible
-                              join 
-                              (select curr_lat, curr_lon from user_locations where user_id = '${user.user_id}') as my_loc
-                              join users on notes_visible.user_id = users.user_id) as notes_visible_within_radius
+                                  ${frequencyQuery}`;
+  // Need to add start_date and end_date range
+  const notesByUserQuery = `select * from
+                              (select notes_visible.*, username, ${calcDistanceQuery} as dist_in_mile from
+                                (${getVisibleNotesQuery}) as notes_visible
+                                join 
+                                (${getMyLocationQuery}) as my_loc
+                                join users on notes_visible.user_id = users.user_id) as notes_visible_within_radius
 	                          where dist_in_mile <= radius`;
-  // console.log(notesByUserQuery2);
+  // console.log(notesByUserQuery);
 
-  setUserLocation(user, utils.getDateTimeString(currDateTime), currLocation.lat, currLocation.lon);
+  const notesWithRepliesQuery = `select notes_filtered.*, notes_replied.username as original_postby, notes_replied.text as original_text, notes_replied.timestamp as original_ts from
+                                    (${notesByUserQuery}) as notes_filtered
+                                    left join
+                                    (${notesByUserQuery}) as notes_replied
+                                    on notes_filtered.reply_to = notes_replied.note_id`;
+  console.log(notesWithRepliesQuery);
+
+  setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime), currLocation.lat, currLocation.lon);
 
   mysql_conn.query(currStatesQuery, function (err, currStates) {
     if (err) console.log(err);
 
+
     const state = new State(currStates[0]);
     const filter = new Filter(state.getTags(), state.getKeywords(), state.getWithinRadius(), state.getPostBy(), user);
     const filtersQuery = filter.getFiltersQuery();
+    console.log(filtersQuery);
 
-    const notesByUserStateQuery = `${notesByUserQuery2}${filtersQuery};`;
+    const notesByUserStateQuery = `${notesWithRepliesQuery}${filtersQuery};`;
 
-    mysql_conn.query(notesByUserStateQuery, function (err, notes) {
+    mysql_conn.query(notesByUserStateQuery, function (err, notesWithQuote) {
       if (err) console.log(err);
 
+      console.log(notesWithQuote);
+
       mysql_conn.query(allMyStatesQuery, function (err, myStates) {
+        if (err) console.log(err);
+
         res.render('notes', {
           title: 'Notes',
-          notes: notes,
+          notesWithQuote: notesWithQuote,
+          currDT: currDateTime,
           currState: currState,
           myStates: myStates,
           currLat: currLocation.lat,
@@ -162,7 +182,7 @@ router.post('/add-note', function(req, res) {
     const note_id = uuid_v1();
     const insertUserQuery = `insert into notes (note_id, user_id, text, lat, lon, timestamp, radius, visibility)
                             values ('${note_id}', ${user.user_id},'${text}', ${lat}, ${lon},
-                                    '${schedule.currDateTime()}', ${radius}, '${visibility}');`;
+                                    '${schedule.currDateTime()}', '${radius}', '${visibility}');`;
     mysql_conn.query(insertUserQuery, function(err) {
       if (err) console.log(err);
 
@@ -184,6 +204,84 @@ router.post('/add-note', function(req, res) {
     });
   }
 });
+
+/* GET all notes by some user */
+router.get('/all/users/:username', auth.isUser, function(req, res) {
+  const user = req.user;
+  const username = req.params.username;
+
+  const getNoteByUserNameQuery = `select * from notes join users on notes.user_id = users.user_id where username = '${username}'`;
+  mysql_conn.query(getNoteByUserNameQuery, function (err, rows) {
+    if (err) console.log(err);
+
+
+    res.render('notes_by_user', {
+      title: 'Notes',
+      username: username,
+      notes: rows,
+      utils: utils
+    });
+  });
+});
+
+/* GET reply note */
+router.get('/:id/reply', auth.isUser, function(req, res) {
+  const user = req.user;
+  const note_id = req.params.id;
+
+  const getNoteQuery = `select * from notes join users on notes.user_id = users.user_id where note_id = '${note_id}'`;
+  mysql_conn.query(getNoteQuery, function (err, rows) {
+    if (err) console.log(err);
+
+    res.render('reply_note', {
+      title: 'Reply Note',
+      note: rows[0],
+      replyMsg: "",
+      utils: utils
+    });
+  });
+});
+
+/* POST reply note */
+router.post('/:id/reply', auth.isUser, function(req, res) {
+  const user = req.user;
+  const reply_to = req.params.id;
+  const replyMessage = req.body.replyMsg;
+
+  const getNoteQuery = `select * from notes join users on notes.user_id = users.user_id where note_id = '${reply_to}'`;
+  mysql_conn.query(getNoteQuery, function (err, rows) {
+    if (err) console.log(err);
+
+    const note_id = uuid_v1();
+    const noteReplied = rows[0];
+    console.log(noteReplied);
+    const insertReplyQuery = `insert into notes (note_id, reply_to, user_id, text, lat, lon, timestamp, radius, visibility)
+                            values ('${note_id}', '${reply_to}', ${user.user_id},'${replyMessage}', ${noteReplied.lat}, ${noteReplied.lon},
+                                    '${utils.getDateTimeString(new Date())}', ${noteReplied.radius}, '${noteReplied.visibility}');`;
+    const getScheduleQuery = `select * from schedules where note_id = '${noteReplied.note_id}'`;
+    console.log(getScheduleQuery);
+    mysql_conn.query(getScheduleQuery, function(err, schedules) {
+      if (err) console.log(err);
+
+      mysql_conn.query(insertReplyQuery, function(err) {
+        if (err) console.log(err);
+
+        const schedule = schedules[0];
+        console.log(schedule);
+        const insertScheduleQuery = `insert into schedules (note_id, start_time, end_time, start_date, end_date, frequency) 
+                              values ('${note_id}', '${schedule.start_time}', '${schedule.end_time}', 
+                              '${utils.getDateString(schedule.start_date)}', '${utils.getDateString(schedule.end_date)}', '${schedule.frequency}');`;
+        mysql_conn.query(insertScheduleQuery, function(err) {
+          if (err) console.log(err);
+
+          res.redirect('/notes');
+        });
+      });
+    });
+
+  });
+});
+
 
 /* POST edit geo */
 router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
@@ -238,10 +336,26 @@ router.post('/curr_location/:mode/:currState', auth.isUser, function(req, res) {
   const currDateTime = new Date();
 
   if (mode === "custom") {
-    setUserLocation(user, utils.getDateTimeString(currDateTime), currLat, currLon);
+    setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime), currLat, currLon);
     res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}`);
   } else { // mode === "default"
-    setUserLocation(user, utils.getDateTimeString(currDateTime), 40.7539278, -73.9865007);
+    setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime), 40.7539278, -73.9865007);
+    res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
+  }
+});
+
+/* POST set user current timestamp */
+router.post('/curr_timestamp/:mode/', auth.isUser, function(req, res) {
+  const user = req.user;
+  const currState = req.params.currState;
+  const mode = req.params.mode;
+  const currDateTime = req.body.currDT;
+
+  if (mode === "custom") {
+    setUserCurrTime(user, utils.getDateTimeString(currDateTime));
+    res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}&currDateTime=${currDateTime}`);
+  } else { // mode === "default"
+
     res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
   }
 });
@@ -257,29 +371,45 @@ function insertSchedule(schedule, note_id) {
 }
 
 function getCurrState(currStateFromReq) {
-  if (currStateFromReq == null || currStateFromReq === 'undefined') {
+  if (currStateFromReq === undefined) {
     return 'default';
   } else {
     return currStateFromReq;
   }
 }
 
-function getCurrLocation(currLat, currLon) {
-  if (currLat === undefined || currLon === undefined) {
+function getCurrLocation(currLatFromReq, currLonFromReq) {
+  if (currLatFromReq === undefined || currLonFromReq === undefined) {
     return {lat: 40.7539278, lon: -73.9865007};
   } else {
-    return {lat: currLat, lon: currLon};
+    return {lat: currLatFromReq, lon: currLonFromReq};
   }
 }
 
-function setUserLocation(user, currTime, currLat, currLon) {
-  const checkCurrLocQuery = `select * from user_locations where user_id = '${user.user_id}';`;
+function getCurrTime(currTimeFromReq) {
+  if (currTimeFromReq === undefined) {
+    return new Date();
+  } else {
+    return currTimeFromReq;
+  }
+}
+
+function getPostByUser(postByUser) {
+  if (postByUser === undefined) {
+    return 'all';
+  } else {
+    return postByUser;
+  }
+}
+
+function setUserTimeAndLocation(user, currTime, currLat, currLon) {
+  const checkCurrLocTimeQuery = `select * from user_locations where user_id = '${user.user_id}';`;
   const insertCurrLocQuery = `insert user_locations (user_id, curr_Time, curr_lat, curr_lon) values
                               ('${user.user_id}', '${currTime}', ${currLat}, ${currLon});`;
-  const updateCurrLocQuery = `update user_locations set
+  const updateCurrLocQuery = `update user_locations set 
                               curr_time = '${currTime}', curr_lat = ${currLat}, curr_lon = ${currLon}
                               where user_id = '${user.user_id}';`;
-  mysql_conn.query(checkCurrLocQuery, function(err, rows) {
+  mysql_conn.query(checkCurrLocTimeQuery, function(err, rows) {
     if (err) console.log(err);
 
     if (rows.length) {
@@ -288,6 +418,28 @@ function setUserLocation(user, currTime, currLat, currLon) {
       });
     } else {
       mysql_conn.query(insertCurrLocQuery, function (err) {
+        if (err) console.log(err);
+      });
+    }
+  });
+}
+
+function setUserCurrTime(user, currTime) {
+  const defaultLocation = {lat: 40.7539278, lon: -73.9865007};
+  const checkCurrLocTimeQuery = `select * from user_locations where user_id = '${user.user_id}';`;
+  const insertCurrTimeQuery = `insert user_locations (user_id, curr_Time, curr_lat, curr_lon) values
+                              ('${user.user_id}', '${currTime}', ${defaultLocation.lat}, ${defaultLocation.lon});`;
+  const updateCurrTimeQuery = `update user_locations set curr_time = '${currTime}'
+                                    where user_id = '${user.user_id}';`;
+  mysql_conn.query(checkCurrLocTimeQuery, function(err, rows) {
+    if (err) console.log(err);
+
+    if (rows.length) {
+      mysql_conn.query(updateCurrTimeQuery, function (err) {
+        if (err) console.log(err);
+      });
+    } else {
+      mysql_conn.query(insertCurrTimeQuery, function (err) {
         if (err) console.log(err);
       });
     }

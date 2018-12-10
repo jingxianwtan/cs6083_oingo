@@ -3,3 +3,34 @@
     background-color: #f2dede;
     border-color: #ebccd1;
 }
+
+.note-area {
+    background-color: #ffffff;
+    border: 1px #dadada solid;
+    padding: 10px 10px;
+    margin: 20px 0;
+}
+
+.original-note {
+    background-color: #eaeaea;
+    padding: 10px 20px;
+}
+
+.note-content {
+    background-color: #ffffff;
+    padding: 10px 10px;
+}
+
+.note-timestamp {
+    font-size: 1em;
+    color: #aaaaaa;
+    display: inline-block;
+    width: 80%;
+    height: 90%;
+}
+
+.reply-click {
+    float: right;
+    display: inline-block;
+    height: 90%;
+}

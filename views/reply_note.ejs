@@ -1,0 +1,25 @@
+<% include ./_layouts/header %>
+<h2 class="page-title">Reply note</h2>
+<a href="/notes" class="btn btn-primary">Back to all notes</a>
+<br><br>
+
+<div class="note-area">
+    <div class="initial-note">
+        <div class="note-content"><%- `${utils.clickableUserName(note.username)}: ${utils.textWithClickableTags(note.text)}` %></div>
+    </div>
+
+    <br><br>
+
+    <div>
+        <form method="post" action="/notes/<%= note.note_id %>/reply">
+            <div class="form-group">
+                <label for="">Reply Message</label>
+                <input type="text" class="form-control" name="replyMsg" placeholder="Reply message..." value="<%= replyMsg %>">
+            </div>
+            <button class="btn btn-primary">Reply</button>
+        </form>
+    </div>
+</div>
+
+
+<% include ./_layouts/footer %>

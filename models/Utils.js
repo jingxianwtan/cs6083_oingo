@@ -15,6 +15,10 @@ module.exports = function Utils() {
     return text.replace(hashtagRegex, `$1<a href='/tags/$2/'>#$2</a>`)
   };
 
+  this.clickableUserName = function replaceUsername(username) {
+    return `<a href='/notes/all/users/${username}/'>@${username}</a>`
+  };
+
   this.getDateString = function getDateStringFromDateTime(datetime) {
     if (!datetime) {
       return "";

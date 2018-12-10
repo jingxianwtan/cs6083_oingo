@@ -19,6 +19,8 @@
     <button class="btn btn-default">Set State</button>
 </form>
 
+<br><br>
+
 <form>
     <label for="">Your default current location is at {lat: 40.7539278, lon: -73.9865007}.</label>
     <input type="text" class="form-control" name="currLat" value="<%= currLat %>">
@@ -29,23 +31,35 @@
 
 <br><br>
 
-<table class="table table-striped sorting">
-    <thead>
-    <tr>
-        <th>Text</th>
-        <th>Posted By</th>
-        <th>Post Time</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% notes.forEach(function(note) { %>
-        <tr>
-            <td><%- utils.textWithClickableTags(note.text) %></td>
-            <td><%= note.username %></td>
-            <td><%= note.timestamp %></td>
-        </tr>
-    <% }); %>
-    </tbody>
-</table>
+<form>
+    <label for="">Your default current time is <%= utils.getDateTimeString(currDT) %>.</label>
+    <input type="text" class="form-control" name="currDT" value="<%= utils.getDateTimeString(currDT) %>">
+    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_timestamp/custom">Set A Different Current DateTime</button>
+    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_timestamp/default">Set Real Current DateTime</button>
+</form>
+
+<br><br>
+
+<div>
+    <% if (!notesWithQuote.length) { %>
+        <div>No active notes are available at this time and location! </div>
+    <% } else { %>
+        <% notesWithQuote.forEach(function(noteWithQuote) { %>
+            <div class="note-area">
+                <% if (noteWithQuote.original_postby != null) { %>
+                <div class="original-note">
+                    <div><%- `Reply: ${utils.clickableUserName(noteWithQuote.original_postby)}: ${utils.textWithClickableTags(noteWithQuote.original_text)}` %></div>
+                    <div class="note-timestamp"><%= `Posted at: ${utils.getDateTimeString(noteWithQuote.original_ts)}` %></div>
+                </div>
+                <% } %>
+                <div class="note-content"><%- `${utils.clickableUserName(noteWithQuote.username)}: ${utils.textWithClickableTags(noteWithQuote.text)}` %></div>
+                <div>
+                    <div class="note-timestamp"><%= `Posted at: ${utils.getDateTimeString(noteWithQuote.timestamp)}` %></div>
+                    <div class="reply-click"><a href="/notes/<%= noteWithQuote.note_id %>/reply">Reply</a></div>
+                </div>
+            </div>
+        <% }); %>
+    <% } %>
+</div>
 
 <% include ./_layouts/footer %>

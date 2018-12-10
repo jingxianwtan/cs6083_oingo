@@ -41,7 +41,7 @@ module.exports = function Filter(tags, keywords, withinRadius, postBy, user) {
                     .filter(query => query.length);
 
     if (filters.length) {
-      return ` and (${filters.join(") and (")})`;
+      return `\nwhere (${filters.join(") and (")})`;
     } else {
       return "";
     }

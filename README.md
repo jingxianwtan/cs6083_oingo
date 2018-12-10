@@ -4,6 +4,7 @@
 //TODO:
 * Reply to
 * If the post is my own, do I need to check distance? --- My notes: no. All notes on home page: yes
+* Check frequency = one-time
 
 
 //Done:
