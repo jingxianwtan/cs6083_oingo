@@ -18,6 +18,7 @@
                 <div class="note-content"><%- `${utils.clickableUserName(noteWithQuoteAndSchedule.username)}: ${utils.textWithClickableTags(noteWithQuoteAndSchedule.text)}` %></div>
                 <div>
                     <div class="my-note-attr"><%= `Posted at: ${utils.getDateTimeString(noteWithQuoteAndSchedule.timestamp)}` %></div>
+                    <div class="my-note-attr"><%= `Radius: ${noteWithQuoteAndSchedule.radius}` %> mi</div>
                     <% if (!noteWithQuoteAndSchedule.original_postby) { %>
                         <div class="my-note-attr"><%= `Frequency: ${noteWithQuoteAndSchedule.frequency}` %></div>
                     <% } %>

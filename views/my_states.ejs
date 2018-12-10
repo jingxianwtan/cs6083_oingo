@@ -9,6 +9,7 @@
         <th>StateName</th>
         <th>Allowed Tags</th>
         <th>Allowed Keywords</th>
+        <th>Within Radius</th>
         <th>Posted By</th>
         <th>Edit</th>
         <th>Delete</th>
@@ -20,6 +21,7 @@
             <td><%= state.name %></td>
             <td><%= state.tags %></td>
             <td><%= state.keywords %></td>
+            <td><%= state.within_radius %> mi</td>
             <td><%= state.post_by %></td>
             <td><a href="/my_states/edit/<%= state.state_id %>">Edit</a></td>
             <td><a class="confirmDeletion" href="/my_states/delete/<%= state.state_id %>">Delete</a></td>

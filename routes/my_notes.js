@@ -10,13 +10,13 @@ const utils = new Utils();
 /* GET my notes */
 router.get('/', auth.isUser, function(req, res) {
   const user = req.user;
-  const notesByMeQuery = `select note_id, reply_to, text, username, frequency, timestamp from
+  const notesByMeQuery = `select note_id, reply_to, text, username, frequency, timestamp, radius from
                           notes natural join schedules natural join users
                           where user_id = ${user.user_id}`;
   const getNotesByUsersQuery = `select note_id, text, username, timestamp from notes natural join users`;
   const myNotesWithQuoteAndSchedulesQuery = `select my_notes.*, all_notes.text as original_text, all_notes.username as original_postby, all_notes.timestamp as original_ts from
                                 (${notesByMeQuery}) as my_notes
-                                join 
+                                left join 
                                 (${getNotesByUsersQuery}) as all_notes
                                 on my_notes.reply_to = all_notes.note_id`;
   mysql_conn.query(myNotesWithQuoteAndSchedulesQuery, function (err, rows) {
@@ -27,6 +27,7 @@ router.get('/', auth.isUser, function(req, res) {
         title: 'My Notes'
       });
     } else {
+      console.log(rows);
       res.render('my_notes', {
         title: 'My Notes',
         myNotesWithQuoteAndSchedulesQuery: rows,
