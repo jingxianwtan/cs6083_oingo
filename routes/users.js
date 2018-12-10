@@ -44,7 +44,7 @@ router.post('/register', function(req, res) {
               if (err) console.log(err);
 
               req.flash('success', 'You are now registered!');
-              res.redirect('/');
+              res.redirect('/users/login');
             });
           });
         });
@@ -67,7 +67,7 @@ router.get('/login', function(req, res) {
 /* POST login */
 router.post('/login', function(req, res, next) {
   passport.authenticate('local', {
-    successRedirect: '/',
+    successRedirect: '/notes',
     failureRedirect: '/users/login',
     failureFlash: true
   })(req, res, next);
