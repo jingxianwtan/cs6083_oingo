@@ -76,19 +76,23 @@ app.get('*', function(req, res, next) {
 });
 
 // Set routes
-const users = require('./routes/users.js');
-const notes = require('./routes/notes.js');
-const myNotes = require('./routes/my_notes.js');
+const users = require('./routes/users');
+const notes = require('./routes/notes');
+const replyNote = require('./routes/reply_note');
+const myNotes = require('./routes/my_notes');
 const friends = require('./routes/friends');
 const everyone = require('./routes/everyone');
 const myStates = require('./routes/my_states');
+const customize = require('./routes/customize');
 
 app.use('/users', users);
 app.use('/notes', notes);
+app.use('/reply-note', replyNote);
 app.use('/my_notes', myNotes);
 app.use('/friends', friends);
 app.use('/everyone', everyone);
 app.use('/my_states', myStates);
+app.use('/customize', customize);
 
 // Start the server
 const hostname = '127.0.0.1';

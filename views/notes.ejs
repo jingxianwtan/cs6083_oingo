@@ -38,11 +38,11 @@
         <input type="text" class="setting-box" name="currDT" value="<%= utils.getDateTimeString(currDT) %>">
     </div>
     <% if (!tagLimit) { %>
-    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/custom?currState=<%= currState %>">Set Customized Time and Location</button>
-    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/default?currState=<%= currState %>">Set Real Time and Default Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/customize/curr_time_and_location/custom?currState=<%= currState %>">Set Customized Time and Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/customize/curr_time_and_location/default?currState=<%= currState %>">Set Real Time and Default Location</button>
     <% } else { %>
-    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/custom?tag=<%= tagLimit %>">Set Customized Time and Location</button>
-    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/default?tag=<%= tagLimit %>">Set Real Time and Default Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/customize/curr_time_and_location/custom?tag=<%= tagLimit %>">Set Customized Time and Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/customize/curr_time_and_location/default?tag=<%= tagLimit %>">Set Real Time and Default Location</button>
     <% } %>
 </form>
 
@@ -63,7 +63,7 @@
                 <div class="note-content"><%- `${utils.clickableUserName(noteWithQuote.username)}: ${utils.textWithClickableTags(noteWithQuote.text)}` %></div>
                 <div>
                     <div class="note-timestamp"><%= `Posted at: ${utils.getDateTimeString(noteWithQuote.timestamp)}` %></div>
-                    <div class="reply-click"><a href="/notes/<%= noteWithQuote.note_id %>/reply">Reply</a></div>
+                    <div class="reply-click"><a href="/reply-note/<%= noteWithQuote.note_id %>">Reply</a></div>
                 </div>
             </div>
         <% }); %>

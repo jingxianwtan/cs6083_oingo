@@ -67,4 +67,26 @@ module.exports = function Utils() {
 
     return `${hours}:${minutes}:${seconds}`;
   };
+
+  this.setUserTimeAndLocation = function setUserTimeAndLocation(mysql_conn, user, currTime, currLat, currLon) {
+    const checkCurrLocTimeQuery = `select * from user_locations where user_id = '${user.user_id}';`;
+    const insertCurrLocQuery = `insert user_locations (user_id, curr_Time, curr_lat, curr_lon) values
+                              ('${user.user_id}', '${currTime}', ${currLat}, ${currLon});`;
+    const updateCurrLocQuery = `update user_locations set 
+                              curr_time = '${currTime}', curr_lat = ${currLat}, curr_lon = ${currLon}
+                              where user_id = '${user.user_id}';`;
+    mysql_conn.query(checkCurrLocTimeQuery, function(err, rows) {
+      if (err) console.log(err);
+
+      if (rows.length) {
+        mysql_conn.query(updateCurrLocQuery, function (err) {
+          if (err) console.log(err);
+        });
+      } else {
+        mysql_conn.query(insertCurrLocQuery, function (err) {
+          if (err) console.log(err);
+        });
+      }
+    });
+  }
 };

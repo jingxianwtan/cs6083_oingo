@@ -11,7 +11,7 @@
     <br><br>
 
     <div>
-        <form method="post" action="/notes/<%= note.note_id %>/reply">
+        <form method="post" action="/reply-note/<%= note.note_id %>">
             <div class="form-group">
                 <label for="">Reply Message</label>
                 <input type="text" class="form-control" name="replyMsg" placeholder="Reply message..." value="<%= replyMsg %>">
