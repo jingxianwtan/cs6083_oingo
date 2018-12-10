@@ -1,55 +1,56 @@
 const Utils = require('./Utils');
 const utils = new Utils();
 
-module.exports = function Schedule(currDate, startDate, endDate, startTime, endTime, frequency) {
-  this.currDateTime = function getCurrDateTime() {
-    return utils.getDateTimeString(currDate);
-  };
+function Schedule(currDate, startDate, endDate, startTime, endTime, frequency) {
+  this.currDate = currDate;
+  this.startDate = startDate;
+  this.endDate = endDate;
+  this.startTime = startTime;
+  this.endTime = endTime;
+  this.frequency = frequency;
+}
 
-  this.startDate = function getStartDate() {
-    if (!startDate || startDate.isBefore(currDate)) {
-      const dayOfMonth = utils.prettyPrint(currDate.getDate());
-      const month = utils.prettyPrint(currDate.getMonth() + 1);
-      return `${currDate.getFullYear()}-${month}-${dayOfMonth}`;
-    } else {
-      return startDate;
-    }
-  };
+Schedule.prototype.currDateTime = function getCurrDateTime() {
+  return utils.getDateTimeString(this.currDate);
+};
 
-  this.endDate = function getEndDate() {
-    if (!endDate || endDate.isBefore(currDate)) {
-      return `9999-12-31`;
-    } else {
-      return endDate;
-    }
-  };
-
-  this.startTime = function getStartTime() {
-    if (!startTime) {
-      return `00:00`;
-    } else {
-      return startTime;
-    }
-  };
-
-  this.endTime = function getEndTime() {
-    if (!endTime) {
-      return `23:59`;
-    } else {
-      return endTime;
-    }
-  };
-
-  this.frequency = function getFrequency() {
-    return frequency;
+Schedule.prototype.getStartDate = function getStartDate() {
+  if (!this.startDate || this.startDate.isBefore(this.currDate)) {
+    const dayOfMonth = utils.prettyPrint(this.currDate.getDate());
+    const month = utils.prettyPrint(this.currDate.getMonth() + 1);
+    return `${this.currDate.getFullYear()}-${month}-${dayOfMonth}`;
+  } else {
+    return this.startDate;
   }
 };
 
+Schedule.prototype.getEndDate = function getEndDate() {
+  if (!this.endDate || this.endDate.isBefore(this.currDate)) {
+    return `9999-12-31`;
+  } else {
+    return this.endDate;
+  }
+};
 
-// { text: 'This is a note of #food2',
-//   radius: '100',
-//   visibility: 'friends',
-//   start_date: '2018-08-31',
-//   end_date: '2018-12-31',
-//   start_time: '00:00',
-//   end_time: '23:59' }
+Schedule.prototype.getStartTime = function getStartTime() {
+  if (!this.startTime) {
+    return `00:00`;
+  } else {
+    return this.startTime;
+  }
+};
+
+Schedule.prototype.getEndTime = function getEndTime() {
+  if (!this.endTime) {
+    return `23:59`;
+  } else {
+    return this.endTime;
+  }
+};
+
+Schedule.prototype.getFrequency = function getFrequency() {
+  return this.frequency;
+};
+
+
+module.exports = Schedule;

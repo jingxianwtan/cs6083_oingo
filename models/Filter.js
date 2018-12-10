@@ -1,7 +1,6 @@
 module.exports = function Filter(tags, keywords, withinRadius, postBy, user) {
   this.getTagQuery = function getTagQuery() {
     if (tags.length) {
-      console.log(tags.map(tag => `'#' + notes_filtered.text + '#' like '%[^a-zA-Z0-9]#${tag}[^a-zA-Z0-9]%'`).join(" and "));
       return tags.map(tag => `notes_filtered.text like '% #${tag}%'`).join(" and ");
     } else {
       return "";
@@ -10,7 +9,6 @@ module.exports = function Filter(tags, keywords, withinRadius, postBy, user) {
 
   this.getKeywordsQuery = function getKeywordsQuery() {
     if (keywords.length) {
-      console.log(keywords.map(keyword => `'#' + notes_filtered.text + '#' like '%[^a-zA-Z0-9]${keyword}[^a-zA-Z0-9]%'`).join(" and "));
       return keywords.map(keyword => `notes_filtered.text like '%${keyword}%'`).join(" and ");
     } else {
       return "";
@@ -26,7 +24,6 @@ module.exports = function Filter(tags, keywords, withinRadius, postBy, user) {
   };
 
   this.getPostByQuery = function getPostByQuery() {
-    console.log(postBy);
     if (postBy === "everyone") {
       return "";
     } else if (postBy === "friends") {

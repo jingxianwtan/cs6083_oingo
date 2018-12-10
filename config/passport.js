@@ -1,5 +1,4 @@
 const LocalStrategy = require('passport-local').Strategy;
-const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const mysql_conn = require('../models/MySqlConn');
 
@@ -30,7 +29,6 @@ module.exports = function(passport) {
   }));
 
   passport.serializeUser(function(sqlRow, done) {
-    console.log(JSON.stringify(sqlRow));
     done(null, sqlRow.user_id);
   });
 

@@ -24,9 +24,7 @@ router.get('/', auth.isUser, function(req, res) {
 /* GET add friend */
 router.get('/add-friend/:id', auth.isUser, function(req, res) {
   const other_user_id = req.params.id;
-  console.log(other_user_id);
   const user = res.locals.user;
-  console.log(user);
 
   const queryStr2 = `insert into friendships values 
                     (${user.user_id}, ${other_user_id}), (${other_user_id}, ${user.user_id});`;
@@ -40,9 +38,7 @@ router.get('/add-friend/:id', auth.isUser, function(req, res) {
 /* GET unfriend */
 router.get('/unfriend/:id', auth.isUser, function(req, res) {
   const friend_id = req.params.id;
-  console.log(friend_id);
   const user = res.locals.user;
-  console.log(user);
 
   const queryStr = `delete from friendships where 
                     (user_id = ${user.user_id} and friend_id = ${friend_id})

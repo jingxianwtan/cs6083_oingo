@@ -10,7 +10,6 @@ const utils = new Utils();
 /* GET my notes */
 router.get('/', auth.isUser, function(req, res) {
   const user = req.user;
-  console.log(user);
   const notesByMeQuery = `select note_id, reply_to, text, username, frequency, timestamp from
                           notes natural join schedules natural join users
                           where user_id = ${user.user_id}`;
@@ -20,15 +19,20 @@ router.get('/', auth.isUser, function(req, res) {
                                 join 
                                 (${getNotesByUsersQuery}) as all_notes
                                 on my_notes.reply_to = all_notes.note_id`;
-  console.log(myNotesWithQuoteAndSchedulesQuery);
   mysql_conn.query(myNotesWithQuoteAndSchedulesQuery, function (err, rows) {
-    if (err) console.log(err);
-
-    res.render('my_notes', {
-      title: 'My Notes',
-      myNotesWithQuoteAndSchedulesQuery: rows,
-      utils: utils
-    });
+    if (err) {
+      console.log(err);
+      res.render('my_notes', {
+        errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+        title: 'My Notes'
+      });
+    } else {
+      res.render('my_notes', {
+        title: 'My Notes',
+        myNotesWithQuoteAndSchedulesQuery: rows,
+        utils: utils
+      });
+    }
   });
 });
 
@@ -41,16 +45,35 @@ router.get('/delete/:id', auth.isUser, function(req, res) {
   const deleteTagQuery = `delete from tags where note_id = '${note_id}';`;
 
   mysql_conn.query(deleteNoteQuery, function (err) {
-    if (err) console.log(err);
-
-    mysql_conn.query(deleteScheduleQuery, function (err) {
-      if (err) console.log(err);
-
-      mysql_conn.query(deleteTagQuery, function (err) {
-        if (err) console.log(err);
-        res.redirect('/my_notes');
+    if (err) {
+      console.log(err);
+      res.render('my_notes', {
+        errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+        title: 'My Notes'
       });
-    });
+    } else {
+      mysql_conn.query(deleteScheduleQuery, function (err) {
+        if (err) {
+          console.log(err);
+          res.render('my_notes', {
+            errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+            title: 'My Notes'
+          });
+        } else {
+          mysql_conn.query(deleteTagQuery, function (err) {
+            if (err) {
+              console.log(err);
+              res.render('my_notes', {
+                errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+                title: 'My Notes'
+              });
+            } else {
+              res.redirect('/my_notes');
+            }
+          });
+        }
+      });
+    }
   });
 });
 
@@ -60,31 +83,36 @@ router.get('/edit/:id', auth.isUser, function(req, res) {
 
   const getNoteQuery = `select * from notes natural join schedules where note_id = '${note_id}';`;
   mysql_conn.query(getNoteQuery, function (err, rows) {
-    if (err) console.log(err);
+    if (err) {
+      console.log(err);
+      res.render('edit_note', {
+        errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+        title: 'Edit Notes'
+      });
+    } else {
+      const noteWithSchedule = rows[0];
 
-    const noteWithSchedule = rows[0];
-    console.log(noteWithSchedule);
-    console.log(utils.getDateString(noteWithSchedule.start_date));
-    console.log(utils.getDateString(noteWithSchedule.end_date));
-    res.render('edit_note', {
-      title: 'Edit Notes',
-      id: note_id,
-      text: noteWithSchedule.text,
-      radius: noteWithSchedule.radius,
-      visibility: noteWithSchedule.visibility,
-      start_date: utils.getDateString(noteWithSchedule.start_date),
-      end_date: utils.getDateString(noteWithSchedule.end_date),
-      start_time: noteWithSchedule.start_time,
-      end_time: noteWithSchedule.end_time,
-      frequency: noteWithSchedule.frequency,
-      lat: noteWithSchedule.lat,
-      lon: noteWithSchedule.lon
-    });
+      res.render('edit_note', {
+        title: 'Edit Notes',
+        id: note_id,
+        text: noteWithSchedule.text,
+        radius: noteWithSchedule.radius,
+        visibility: noteWithSchedule.visibility,
+        start_date: utils.getDateString(noteWithSchedule.start_date),
+        end_date: utils.getDateString(noteWithSchedule.end_date),
+        start_time: noteWithSchedule.start_time,
+        end_time: noteWithSchedule.end_time,
+        frequency: noteWithSchedule.frequency,
+        lat: noteWithSchedule.lat,
+        lon: noteWithSchedule.lon
+      });
+    }
   });
 });
 
 /* POST edit my note */
 router.post('/edit/:id', auth.isUser, function(req, res) {
+  const user = req.user;
   const note_id = req.params.id;
 
   const note_attributes = {
@@ -109,14 +137,28 @@ router.post('/edit/:id', auth.isUser, function(req, res) {
   const updateNoteQuery = `update notes set ${nonNullNoteQuery} where note_id = '${note_id}';`;
   const updateScheduleQuery = `update schedules set ${nonNullScheduleQuery} where note_id = '${note_id}';`;
   mysql_conn.query(updateNoteQuery, function (err) {
-    if (err) console.log(err);
-
-    mysql_conn.query(updateScheduleQuery, function(err) {
-      if (err) console.log(err);
-    });
-    updateTagsInNote(note_id, note_attributes.text);
-
-    res.redirect('/my_notes');
+    if (err) {
+      console.log(err);
+      res.render('edit_note', {
+        errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+        title: 'Edit Notes',
+        user: user
+      });
+    } else {
+      mysql_conn.query(updateScheduleQuery, function(err) {
+        if (err) {
+          console.log(err);
+          res.render('edit_note', {
+            errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+            title: 'Edit Notes',
+            user: user
+          });
+        } else {
+          updateTagsInNote(note_id, note_attributes.text);
+          res.redirect('/my_notes');
+        }
+      });
+    }
   });
 });
 
@@ -141,8 +183,6 @@ function updateTagsInNote(note_id, text) {
   const getTagsQuery = `select tag from tags where note_id = '${note_id}';`;
   mysql_conn.query(getTagsQuery, function(err, rows) {
     if (err) console.log(err);
-    console.log(newTags);
-    console.log(rows);
 
     if (rows.length) {
       let tagsToBeDeleted = [];
@@ -158,7 +198,6 @@ function updateTagsInNote(note_id, text) {
         }
         if (!foundInOldTags) tagsToBeAdded.push(newTags[i]);
       }
-      console.log(tagsToBeAdded);
 
       for (let j in rows) {
         let foundInNewTags = false;
@@ -170,7 +209,6 @@ function updateTagsInNote(note_id, text) {
         }
         if (!foundInNewTags) tagsToBeDeleted.push(rows[j].tag);
       }
-      console.log(tagsToBeDeleted);
 
       if (tagsToBeAdded.length) {
         const insertTagValues = tagsToBeAdded.map(tag => `('${tag}', '${note_id}')`);
