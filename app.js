@@ -80,7 +80,6 @@ const index = require('./routes/index.js');
 const users = require('./routes/users.js');
 const notes = require('./routes/notes.js');
 const myNotes = require('./routes/my_notes.js');
-const tags = require('./routes/tags.js');
 const friends = require('./routes/friends');
 const everyone = require('./routes/everyone');
 const myStates = require('./routes/my_states');
@@ -89,32 +88,9 @@ app.use('/', index);
 app.use('/users', users);
 app.use('/notes', notes);
 app.use('/my_notes', myNotes);
-app.use('/getTags', tags);
 app.use('/friends', friends);
 app.use('/everyone', everyone);
 app.use('/my_states', myStates);
-
-// Test sql
-// mysql_conn.query(`select * from users where username = 'williamtan'`, function (err, rows) {
-//   if (err) console.log(err);
-//
-//   if (!rows.length) {
-//     console.log('No users were found!');
-//   }
-//
-//   console.log(rows[0]);
-// });
-//
-// mysql_conn.query(`INSERT INTO users (username, password) VALUES ('stranger','xyzzzzzzzz');`, function (err, rows) {
-//   if (err) console.log(err);
-//   console.log(rows);
-//
-//   if (!rows.length) {
-//     console.log('No users were found!');
-//   }
-//
-//   console.log(rows[0]);
-// });
 
 // Start the server
 const hostname = '127.0.0.1';

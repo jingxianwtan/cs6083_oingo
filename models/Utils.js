@@ -12,7 +12,7 @@ module.exports = function Utils() {
 
   this.textWithClickableTags = function replaceHashTagsInText(text) {
     const hashtagRegex = /(^|)#([\w]+)/gm;
-    return text.replace(hashtagRegex, `$1<a href='/tags/$2/'>#$2</a>`)
+    return text.replace(hashtagRegex, `$1<a href='/notes?tag=$2'>#$2</a>`)
   };
 
   this.clickableUserName = function replaceUsername(username) {

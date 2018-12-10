@@ -17,6 +17,7 @@ router.get('/', auth.isUser, function(req, res) {
   const currState = getCurrState(req.query.currState);
   const currLocation = getCurrLocation(req.query.currLat, req.query.currLon);
   const currDateTime = getCurrTime(req.query.currDateTime);
+  const tag = req.query.tag;
 
   const currTime = utils.getTimeOfDay(currDateTime);
   const currDate = utils.getDateString(currDateTime);
@@ -74,20 +75,14 @@ router.get('/', auth.isUser, function(req, res) {
                                     left join
                                     (${notesByUserQuery}) as notes_replied
                                     on notes_filtered.reply_to = notes_replied.note_id`;
-  console.log(notesWithQuoteQuery);
+  // console.log(notesWithQuoteQuery);
 
   setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime), currLocation.lat, currLocation.lon);
 
   mysql_conn.query(currStatesQuery, function (err, currStates) {
     if (err) console.log(err);
 
-
-    const state = new State(currStates[0]);
-    const filter = new Filter(state.getTags(), state.getKeywords(), state.getWithinRadius(), state.getPostBy(), user);
-    const filtersQuery = filter.getFiltersQuery();
-    console.log(filtersQuery);
-
-    const notesByUserStateQuery = `${notesWithQuoteQuery}${filtersQuery};`;
+    const notesByUserStateQuery = getFinalNoteQuery(tag, new State(currStates[0]), notesWithQuoteQuery, user);
 
     mysql_conn.query(notesByUserStateQuery, function (err, notesWithQuote) {
       if (err) console.log(err);
@@ -97,15 +92,19 @@ router.get('/', auth.isUser, function(req, res) {
       mysql_conn.query(allMyStatesQuery, function (err, myStates) {
         if (err) console.log(err);
 
+        let title = 'Notes';
+        if (tag) title = `Notes with tag #${tag}`;
+
         res.render('notes', {
-          title: 'Notes',
+          title: title,
           notesWithQuote: notesWithQuote,
           currDT: currDateTime,
           currState: currState,
           myStates: myStates,
           currLat: currLocation.lat,
           currLon: currLocation.lon,
-          utils: utils
+          utils: utils,
+          tagLimit: tag
         });
       });
     });
@@ -178,10 +177,10 @@ router.post('/add-note', function(req, res) {
     });
   } else {
     const note_id = uuid_v1();
-    const insertUserQuery = `insert into notes (note_id, user_id, text, lat, lon, timestamp, radius, visibility)
+    const insertNoteQuery = `insert into notes (note_id, user_id, text, lat, lon, timestamp, radius, visibility)
                             values ('${note_id}', ${user.user_id},'${text}', ${lat}, ${lon},
                                     '${schedule.currDateTime()}', '${radius}', '${visibility}');`;
-    mysql_conn.query(insertUserQuery, function(err) {
+    mysql_conn.query(insertNoteQuery, function(err) {
       if (err) console.log(err);
 
       insertSchedule(schedule, note_id);
@@ -323,22 +322,33 @@ router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
 });
 
 /* POST set user current location */
-router.post('/curr_time_and_location/:mode/:currState', auth.isUser, function(req, res) {
+router.post('/curr_time_and_location/:mode', auth.isUser, function(req, res) {
   const user = req.user;
-  const currState = req.params.currState;
   const mode = req.params.mode;
   const currLat = req.body.currLat;
   const currLon = req.body.currLon;
   const currDT = req.body.currDT;
+  const tagLimit = req.query.tag;
+  console.log("here");
+  console.log(tagLimit);
+  const currState = req.query.currState;
   console.log(currLat);
   console.log(currLon);
 
   if (mode === "custom") {
     setUserTimeAndLocation(user, currDT, currLat, currLon);
-    res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}&currDateTime=${currDT}`);
+    if (!tagLimit) {
+      res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}&currDateTime=${currDT}`);
+    } else {
+      res.redirect(`/notes?tag=${tagLimit}&currState=default&currLat=${currLat}&currLon=${currLon}&currDateTime=${currDT}`)
+    }
   } else { // mode === "default"
     setUserTimeAndLocation(user, currDT, 40.7539278, -73.9865007);
-    res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
+    if (!tagLimit) {
+      res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
+    } else {
+      res.redirect(`/notes?tag=${tagLimit}&currState=default&currLat=${40.7539278}&currLon=${-73.9865007}`)
+    }
   }
 });
 
@@ -384,6 +394,19 @@ function getPostByUser(postByUser) {
   }
 }
 
+function getFinalNoteQuery(tagLimit, stateLimit, notesWithQuoteQuery, user) {
+  if (tagLimit) {
+    const filter = new Filter([tagLimit], [], -1, 'everyone', user);
+    const filtersQuery = filter.getFiltersQuery();
+    return `${notesWithQuoteQuery} ${filtersQuery};`;
+  } else {
+    const filter = new Filter(stateLimit.getTags(), stateLimit.getKeywords(), stateLimit.getWithinRadius(), stateLimit.getPostBy(), user);
+    const filtersQuery = filter.getFiltersQuery();
+    console.log(filtersQuery);
+    return `${notesWithQuoteQuery} ${filtersQuery};`;
+  }
+}
+
 function setUserTimeAndLocation(user, currTime, currLat, currLon) {
   const checkCurrLocTimeQuery = `select * from user_locations where user_id = '${user.user_id}';`;
   const insertCurrLocQuery = `insert user_locations (user_id, curr_Time, curr_lat, curr_lon) values
@@ -406,27 +429,6 @@ function setUserTimeAndLocation(user, currTime, currLat, currLon) {
   });
 }
 
-function setUserCurrTime(user, currTime) {
-  const defaultLocation = {lat: 40.7539278, lon: -73.9865007};
-  const checkCurrLocTimeQuery = `select * from user_locations where user_id = '${user.user_id}';`;
-  const insertCurrTimeQuery = `insert user_locations (user_id, curr_Time, curr_lat, curr_lon) values
-                              ('${user.user_id}', '${currTime}', ${defaultLocation.lat}, ${defaultLocation.lon});`;
-  const updateCurrTimeQuery = `update user_locations set curr_time = '${currTime}'
-                                    where user_id = '${user.user_id}';`;
-  mysql_conn.query(checkCurrLocTimeQuery, function(err, rows) {
-    if (err) console.log(err);
-
-    if (rows.length) {
-      mysql_conn.query(updateCurrTimeQuery, function (err) {
-        if (err) console.log(err);
-      });
-    } else {
-      mysql_conn.query(insertCurrTimeQuery, function (err) {
-        if (err) console.log(err);
-      });
-    }
-  });
-}
 
 // Exports
 module.exports = router;
