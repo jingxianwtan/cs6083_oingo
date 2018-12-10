@@ -21,4 +21,8 @@
 * If the post is my own, do I need to check distance? --- My notes: no. All notes on home page: yes
 
 //Bug:
-All console.log(err) needs to show error (e.g. for SQL)
+* All console.log(err) needs to show error (e.g. for SQL)
+* Set state will fail
+* If my note is a reply, should not display frequency
+* Cannot GET /tags/everyone/
+* Add friend needs the other guys' confirmation???
