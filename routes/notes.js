@@ -18,8 +18,6 @@ router.get('/', auth.isUser, function(req, res) {
   const currLocation = getCurrLocation(req.query.currLat, req.query.currLon);
   const currDateTime = getCurrTime(req.query.currDateTime);
 
-  // setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime));
-
   const currTime = utils.getTimeOfDay(currDateTime);
   const currDate = utils.getDateString(currDateTime);
 
@@ -42,7 +40,7 @@ router.get('/', auth.isUser, function(req, res) {
                             or (frequency = 'weekly' 
                                 and start_date <= '${currDate}' and end_date >= '${currDate}' 
                                 and start_time <= '${currTime}' and end_time >= '${currTime}'
-                                and mod(timestampdiff(day, start_date, '2018-12-09'), 7) = 0)
+                                and mod(timestampdiff(day, '${currDate}', start_date), 7) = 0)
                             or (frequency = 'monthly'
                                 and start_date <= '${currDate}' and end_date >= '${currDate}' 
                                 and start_time <= '${currTime}' and end_time >= '${currTime}' 
@@ -71,12 +69,12 @@ router.get('/', auth.isUser, function(req, res) {
 	                          where dist_in_mile <= radius`;
   // console.log(notesByUserQuery);
 
-  const notesWithRepliesQuery = `select notes_filtered.*, notes_replied.username as original_postby, notes_replied.text as original_text, notes_replied.timestamp as original_ts from
+  const notesWithQuoteQuery = `select notes_filtered.*, notes_replied.username as original_postby, notes_replied.text as original_text, notes_replied.timestamp as original_ts from
                                     (${notesByUserQuery}) as notes_filtered
                                     left join
                                     (${notesByUserQuery}) as notes_replied
                                     on notes_filtered.reply_to = notes_replied.note_id`;
-  console.log(notesWithRepliesQuery);
+  console.log(notesWithQuoteQuery);
 
   setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime), currLocation.lat, currLocation.lon);
 
@@ -89,7 +87,7 @@ router.get('/', auth.isUser, function(req, res) {
     const filtersQuery = filter.getFiltersQuery();
     console.log(filtersQuery);
 
-    const notesByUserStateQuery = `${notesWithRepliesQuery}${filtersQuery};`;
+    const notesByUserStateQuery = `${notesWithQuoteQuery}${filtersQuery};`;
 
     mysql_conn.query(notesByUserStateQuery, function (err, notesWithQuote) {
       if (err) console.log(err);
@@ -325,37 +323,21 @@ router.post('/edit-geo/:loc', auth.isUser, function(req, res) {
 });
 
 /* POST set user current location */
-router.post('/curr_location/:mode/:currState', auth.isUser, function(req, res) {
+router.post('/curr_time_and_location/:mode/:currState', auth.isUser, function(req, res) {
   const user = req.user;
   const currState = req.params.currState;
   const mode = req.params.mode;
   const currLat = req.body.currLat;
   const currLon = req.body.currLon;
+  const currDT = req.body.currDT;
   console.log(currLat);
   console.log(currLon);
-  const currDateTime = new Date();
 
   if (mode === "custom") {
-    setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime), currLat, currLon);
-    res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}`);
+    setUserTimeAndLocation(user, currDT, currLat, currLon);
+    res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}&currDateTime=${currDT}`);
   } else { // mode === "default"
-    setUserTimeAndLocation(user, utils.getDateTimeString(currDateTime), 40.7539278, -73.9865007);
-    res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
-  }
-});
-
-/* POST set user current timestamp */
-router.post('/curr_timestamp/:mode/', auth.isUser, function(req, res) {
-  const user = req.user;
-  const currState = req.params.currState;
-  const mode = req.params.mode;
-  const currDateTime = req.body.currDT;
-
-  if (mode === "custom") {
-    setUserCurrTime(user, utils.getDateTimeString(currDateTime));
-    res.redirect(`/notes?currState=${currState}&currLat=${currLat}&currLon=${currLon}&currDateTime=${currDateTime}`);
-  } else { // mode === "default"
-
+    setUserTimeAndLocation(user, currDT, 40.7539278, -73.9865007);
     res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
   }
 });
@@ -390,7 +372,7 @@ function getCurrTime(currTimeFromReq) {
   if (currTimeFromReq === undefined) {
     return new Date();
   } else {
-    return currTimeFromReq;
+    return new Date(currTimeFromReq);
   }
 }
 
