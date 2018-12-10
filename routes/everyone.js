@@ -10,12 +10,18 @@ router.get('/', auth.isUser, function(req, res) {
 
   const queryStr = `select user_id, username from users where user_id != ${user.user_id};`;
   mysql_conn.query(queryStr, function (err, rows) {
-    if (err) console.log(err);
-
-    res.render('everyone', {
-      title: 'Everyone',
-      users: rows
-    });
+    if (err) {
+      console.log(err);
+      res.render('everyone', {
+        errors: [{ param: `Server Error`, msg: `Internal server error on DB query`, value: '' }],
+        title: 'Everyone'
+      });
+    } else {
+      res.render('everyone', {
+        title: 'Everyone',
+        users: rows
+      });
+    }
   });
 });
 
