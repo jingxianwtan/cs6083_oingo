@@ -26,15 +26,24 @@
     <label for="">Your real current time is <%= utils.getDateTimeString(currDT) %>.</label>
     <div><a target="_blank" href="https://www.latlong.net/convert-address-to-lat-long.html">Get Lat Lon from Address</a></div>
     <br>
-    <input type="text" class="form-control" name="currLat" value="<%= currLat %>">
-    <input type="text" class="form-control" name="currLon" value="<%= currLon %>">
-    <input type="text" class="form-control" name="currDT" value="<%= utils.getDateTimeString(currDT) %>">
+    <div class="customized-setting">
+        <label for="currLat">Current Latitude</label>
+        <input type="text" class="setting-box" name="currLat" value="<%= currLat %>">
+    </div>
+    <div class="customized-setting">
+        <label for="currLon">Current Longitude</label>
+        <input type="text" class="setting-box" name="currLon" value="<%= currLon %>">
+    </div>
+    <div class="customized-setting">
+        <label for="currDT">Current DateTime</label>
+        <input type="text" class="setting-box" name="currDT" value="<%= utils.getDateTimeString(currDT) %>">
+    </div>
     <% if (!tagLimit) { %>
-    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_time_and_location/custom?currState=<%= currState %>">Set Customized Time and Location</button>
-    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_time_and_location/default?currState=<%= currState %>">Set Real Time and Default Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/custom?currState=<%= currState %>">Set Customized Time and Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/default?currState=<%= currState %>">Set Real Time and Default Location</button>
     <% } else { %>
-    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_time_and_location/custom?tag=<%= tagLimit %>">Set Customized Time and Location</button>
-    <button class="btn btn-default" formmethod="post" formaction="/notes/curr_time_and_location/default?tag=<%= tagLimit %>">Set Real Time and Default Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/custom?tag=<%= tagLimit %>">Set Customized Time and Location</button>
+    <button class="btn btn-secondary" formmethod="post" formaction="/notes/curr_time_and_location/default?tag=<%= tagLimit %>">Set Real Time and Default Location</button>
     <% } %>
 </form>
 

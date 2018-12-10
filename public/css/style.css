@@ -48,3 +48,15 @@
     padding: 0 10px;
     width: 70%;
 }
+
+.customized-setting {
+    display: inline-block;
+    width: 33%;
+    padding: 5px 10px;
+}
+
+.setting-box {
+    float: right;
+    padding: 0 5px;
+    width: 60%;
+}
