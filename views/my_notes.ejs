@@ -3,25 +3,26 @@
 <a href="/notes/add-note" class="btn btn-primary">Add a new note</a>
 <br><br>
 
-<table class="table table-striped sorting">
-    <thead>
-    <tr>
-        <th>Text</th>
-        <th>Post Time</th>
-        <th>Edit</th>
-        <th>Delete</th>
-    </tr>
-    </thead>
-    <tbody>
-    <% notes.forEach(function(note) { %>
-        <tr>
-            <td><%- utils.textWithClickableTags(note.text) %></td>
-            <td><%= note.timestamp %></td>
-            <td><a href="/my_notes/edit/<%= note.note_id %>">Edit</a></td>
-            <td><a class="confirmDeletion" href="/my_notes/delete/<%= note.note_id %>">Delete</a></td>
-        </tr>
+<% if (!myNotesWithQuoteAndSchedulesQuery.length) { %>
+    <div>No active notes are available at this time and location! </div>
+<% } else { %>
+    <% myNotesWithQuoteAndSchedulesQuery.forEach(function(noteWithQuoteAndSchedule) { %>
+        <div class="note-area">
+            <% if (noteWithQuoteAndSchedule.original_postby != null) { %>
+                <div class="original-note">
+                    <div><%- `Reply: ${utils.clickableUserName(noteWithQuoteAndSchedule.original_postby)}: ${utils.textWithClickableTags(noteWithQuoteAndSchedule.original_text)}` %></div>
+                    <div class="note-timestamp"><%= `Posted at: ${utils.getDateTimeString(noteWithQuoteAndSchedule.original_ts)}` %></div>
+                </div>
+            <% } %>
+            <div class="note-content"><%- `${utils.clickableUserName(noteWithQuoteAndSchedule.username)}: ${utils.textWithClickableTags(noteWithQuoteAndSchedule.text)}` %></div>
+            <div>
+                <div class="my-note-attr"><%= `Posted at: ${utils.getDateTimeString(noteWithQuoteAndSchedule.timestamp)}` %></div>
+                <div class="my-note-attr"><%= `Frequency: ${noteWithQuoteAndSchedule.frequency}` %></div>
+                <div class="edit-delete"><a class="confirmDeletion" href="/my_notes/delete/<%= noteWithQuoteAndSchedule.note_id %>">Delete</a></div>
+                <div class="edit-delete"><a href="/my_notes/edit/<%= noteWithQuoteAndSchedule.note_id %>">Edit</a></div>
+            </div>
+        </div>
     <% }); %>
-    </tbody>
-</table>
+<% } %>
 
 <% include ./_layouts/footer %>

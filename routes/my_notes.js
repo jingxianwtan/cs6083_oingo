@@ -11,15 +11,22 @@ const utils = new Utils();
 router.get('/', auth.isUser, function(req, res) {
   const user = req.user;
   console.log(user);
-  const notesByMeQuery = `select note_id, text, username, timestamp from
-                          notes join users on notes.user_id = users.user_id
-                          where notes.user_id = ${user.user_id};`;
-  mysql_conn.query(notesByMeQuery, function (err, rows) {
+  const notesByMeQuery = `select note_id, reply_to, text, username, frequency, timestamp from
+                          notes natural join schedules natural join users
+                          where user_id = ${user.user_id}`;
+  const getNotesByUsersQuery = `select note_id, text, username, timestamp from notes natural join users`;
+  const myNotesWithQuoteAndSchedulesQuery = `select my_notes.*, all_notes.text as original_text, all_notes.username as original_postby, all_notes.timestamp as original_ts from
+                                (${notesByMeQuery}) as my_notes
+                                join 
+                                (${getNotesByUsersQuery}) as all_notes
+                                on my_notes.reply_to = all_notes.note_id`;
+  console.log(myNotesWithQuoteAndSchedulesQuery);
+  mysql_conn.query(myNotesWithQuoteAndSchedulesQuery, function (err, rows) {
     if (err) console.log(err);
 
     res.render('my_notes', {
       title: 'My Notes',
-      notes: rows,
+      myNotesWithQuoteAndSchedulesQuery: rows,
       utils: utils
     });
   });

@@ -34,3 +34,17 @@
     display: inline-block;
     height: 90%;
 }
+
+.edit-delete {
+    float: right;
+    display: inline-block;
+    padding: 0 10px;
+}
+
+.my-note-attr {
+    font-size: 1em;
+    color: #aaaaaa;
+    display: inline-block;
+    padding: 0 10px;
+    width: 70%;
+}

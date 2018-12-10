@@ -2,7 +2,8 @@
 
 
 //TODO:
-* If the post is my own, do I need to check distance? --- My notes: no. All notes on home page: yes
+* mobile web compatible
+* Error handling
 
 
 //Done:
@@ -17,6 +18,7 @@
 * Check 10 max for state tag/keywords filter
 * Check frequency = one-time
 * Reply to
+* If the post is my own, do I need to check distance? --- My notes: no. All notes on home page: yes
 
 //Bug:
 All console.log(err) needs to show error (e.g. for SQL)
