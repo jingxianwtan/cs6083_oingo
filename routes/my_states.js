@@ -73,67 +73,6 @@ router.post('/add', function(req, res) {
   }
 });
 
-/* Get edit state */
-router.get('/edit/:id', auth.isUser, function(req, res) {
-  const state_id = req.params.id;
-  const user = req.user;
-
-  const getStateQuery = `select * from states where state_id = '${state_id}';`;
-  mysql_conn.query(getStateQuery, function(err, rows) {
-    if (err) console.log(err);
-
-    const state = rows[0];
-    res.render('edit_state', {
-      title: 'Edit State',
-      user: user,
-      state: state
-    });
-  });
-});
-
-/* POST edit state */
-router.post('/edit/:id', function(req, res) {
-  const state_id = req.params.id;
-  const user = req.user;
-
-  req.checkBody("name", "State must have a getName").notEmpty();
-
-  const name = req.body.name;
-  const tags = req.body.tags;
-  const keywords = req.body.keywords;
-  const withinRadius = req.body.withinRadius;
-  const postBy = req.body.postBy;
-
-  const errors = req.validationErrors();
-
-  if (errors) {
-    res.render('edit_state', {
-      errors: errors,
-      title: 'Edit State',
-      user: user,
-      name: name,
-      tags: tags,
-      keywords: keywords,
-      postBy: postBy
-    });
-  } else {
-    const updateStateQuery = `update states set
-                                name = '${name}',
-                                user_id = ${user.user_id},
-                                tags = '${tags}',
-                                keywords = '${keywords}',
-                                within_radius = ${withinRadius},
-                                post_by = '${postBy}'
-                              where state_id = '${state_id}';`;
-    mysql_conn.query(updateStateQuery, function(err) {
-      if (err) console.log(err);
-
-      req.flash('success', 'The state has been edited!');
-      res.redirect('/my_states');
-    });
-  }
-});
-
 /* Get delete state */
 router.get('/delete/:id', auth.isUser, function(req, res) {
   const state_id = req.params.id;
