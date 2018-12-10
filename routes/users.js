@@ -56,7 +56,7 @@ router.post('/register', function(req, res) {
 /* GET login */
 router.get('/login', function(req, res) {
   if (res.locals.user) {
-    res.redirect('/');
+    res.redirect('/notes');
   } else {
     res.render('login', {
       title: 'Log in'

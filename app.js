@@ -76,7 +76,6 @@ app.get('*', function(req, res, next) {
 });
 
 // Set routes
-const index = require('./routes/index.js');
 const users = require('./routes/users.js');
 const notes = require('./routes/notes.js');
 const myNotes = require('./routes/my_notes.js');
@@ -84,7 +83,6 @@ const friends = require('./routes/friends');
 const everyone = require('./routes/everyone');
 const myStates = require('./routes/my_states');
 
-app.use('/', index);
 app.use('/users', users);
 app.use('/notes', notes);
 app.use('/my_notes', myNotes);
