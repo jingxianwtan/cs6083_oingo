@@ -34,6 +34,8 @@ module.exports = function(passport) {
 
   passport.deserializeUser(function(id, done){
     mysql_conn.query(`select * from users where user_id = ${id}`, function (err, rows){
+      if (err) console.log(err);
+
       done(err, rows[0]);
     });
   });

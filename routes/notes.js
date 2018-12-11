@@ -127,6 +127,7 @@ router.post('/add-note', function(req, res) {
   const user = req.user;
 
   req.checkBody("text", "Note text cannot be empty").notEmpty();
+  req.checkBody("text", "Note should not exceed 140 characters").len({max: 140});
   req.checkBody("visibility", "Visibility must be defined").notEmpty();
   req.checkBody("radius", "Radius must be defined").notEmpty();
   req.checkBody("frequency", "Frequency must be defined").notEmpty();

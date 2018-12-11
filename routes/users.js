@@ -56,7 +56,7 @@ router.post('/register', function(req, res) {
 /* GET login */
 router.get('/login', function(req, res) {
   if (res.locals.user) {
-    res.redirect('/notes');
+    res.redirect('/');
   } else {
     res.render('login', {
       title: 'Log in'
@@ -67,7 +67,7 @@ router.get('/login', function(req, res) {
 /* POST login */
 router.post('/login', function(req, res, next) {
   passport.authenticate('local', {
-    successRedirect: '/notes',
+    successRedirect: '/',
     failureRedirect: '/users/login',
     failureFlash: true
   })(req, res, next);

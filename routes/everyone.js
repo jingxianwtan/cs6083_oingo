@@ -8,7 +8,12 @@ const auth = require('../config/auth');
 router.get('/', auth.isUser, function(req, res) {
   const user = res.locals.user;
 
-  const queryStr = `select user_id, username from users where user_id != ${user.user_id};`;
+  const queryStr = `select user_id, username, friend_id as is_my_friend from 
+                    users 
+                    left join
+                    (select friend_id from friendships where user_id = '${user.user_id}') as my_friends
+                    on users.user_id = my_friends.friend_id
+                    where users.user_id != '${user.user_id}';`;
   mysql_conn.query(queryStr, function (err, rows) {
     if (err) {
       console.log(err);

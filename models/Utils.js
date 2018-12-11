@@ -23,9 +23,10 @@ module.exports = function Utils() {
     if (!datetime) {
       return "";
     } else {
-      const month = this.prettyPrint(datetime.getMonth() + 1);
-      const date = this.prettyPrint(datetime.getDate());
-      return `${datetime.getFullYear()}-${month}-${date}`;
+      const dt = new Date(datetime);
+      const month = this.prettyPrint(dt.getMonth() + 1);
+      const date = this.prettyPrint(dt.getDate());
+      return `${dt.getFullYear()}-${month}-${date}`;
     }
   };
 

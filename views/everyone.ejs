@@ -16,7 +16,11 @@
             <tr>
                 <td><%= user.user_id %></td>
                 <td><%= user.username %></td>
+                <% if (user.is_my_friend) { %>
+                <td>Already friend</td>
+                <% } else { %>
                 <td><a href="/friends/add-friend/<%= user.user_id %>">Add friend</a></td>
+                <% } %>
             </tr>
         <% }); %>
         </tbody>
