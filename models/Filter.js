@@ -1,7 +1,7 @@
 module.exports = function Filter(tags, keywords, withinRadius, postBy, user) {
   this.getTagQuery = function getTagQuery() {
     if (tags.length) {
-      return tags.map(tag => `notes_filtered.text like '% #${tag}%'`).join(" and ");
+      return tags.map(tag => `notes_filtered.text like '% #${tag}%'`).join(" or ");
     } else {
       return "";
     }
@@ -9,7 +9,7 @@ module.exports = function Filter(tags, keywords, withinRadius, postBy, user) {
 
   this.getKeywordsQuery = function getKeywordsQuery() {
     if (keywords.length) {
-      return keywords.map(keyword => `notes_filtered.text like '%${keyword}%'`).join(" and ");
+      return keywords.map(keyword => `notes_filtered.text like '%${keyword}%'`).join(" or ");
     } else {
       return "";
     }
