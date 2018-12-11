@@ -33,8 +33,8 @@ app.use(session({
   secret: 'session_cookie_secret',
   store: sessionStore,
   resave: true, // need to be True for the success message to appear during operation
-  saveUninitialized: true
-  // cookie: {secure: true} // need to comment this line out for the success message to appear during operation
+  saveUninitialized: true,
+  cookie: {maxAge: 60000} // need to comment this line out for the success message to appear during operation
 }));
 
 // Express validator middleware
