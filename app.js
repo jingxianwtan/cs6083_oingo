@@ -83,8 +83,9 @@ const friends = require('./routes/friends');
 const everyone = require('./routes/everyone');
 const myStates = require('./routes/my_states');
 
-app.use('/users', users);
+app.use('/', notes);
 app.use('/notes', notes);
+app.use('/users', users);
 app.use('/my_notes', myNotes);
 app.use('/friends', friends);
 app.use('/everyone', everyone);
