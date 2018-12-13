@@ -15,7 +15,7 @@ Schedule.prototype.currDateTime = function getCurrDateTime() {
 };
 
 Schedule.prototype.getStartDate = function getStartDate() {
-  if (!this.startDate || this.startDate.isBefore(this.currDate)) {
+  if (!this.startDate) {
     const dayOfMonth = utils.prettyPrint(this.currDate.getDate());
     const month = utils.prettyPrint(this.currDate.getMonth() + 1);
     return `${this.currDate.getFullYear()}-${month}-${dayOfMonth}`;
@@ -25,7 +25,7 @@ Schedule.prototype.getStartDate = function getStartDate() {
 };
 
 Schedule.prototype.getEndDate = function getEndDate() {
-  if (!this.endDate || this.endDate.isBefore(this.currDate)) {
+  if (!this.endDate) {
     return `9999-12-31`;
   } else {
     return this.endDate;

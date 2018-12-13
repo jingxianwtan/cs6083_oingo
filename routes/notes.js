@@ -169,6 +169,7 @@ router.post('/add-note', function(req, res) {
     const insertNoteQuery = `insert into notes (note_id, user_id, text, lat, lon, timestamp, radius, visibility)
                             values ('${note_id}', ${user.user_id},'${text}', ${lat}, ${lon},
                                     '${schedule.currDateTime()}', '${radius}', '${visibility}');`;
+    console.log(insertNoteQuery);
     mysql_conn.query(insertNoteQuery, function(err) {
       if (err) console.log(err);
 
@@ -317,11 +318,11 @@ router.post('/curr_time_and_location/:mode', auth.isUser, function(req, res) {
       res.redirect(`/notes?tag=${tagLimit}&currState=default&currLat=${currLat}&currLon=${currLon}&currDateTime=${currDT}`)
     }
   } else { // mode === "default"
-    setUserTimeAndLocation(user, currDT, 40.7539278, -73.9865007);
+    setUserTimeAndLocation(user, currDT, 40.693710, -73.987221);
     if (!tagLimit) {
-      res.redirect(`/notes?currState=${currState}&currLat=${40.7539278}&currLon=${-73.9865007}`);
+      res.redirect(`/notes?currState=${currState}&currLat=${40.693710}&currLon=${-73.987221}`);
     } else {
-      res.redirect(`/notes?tag=${tagLimit}&currState=default&currLat=${40.7539278}&currLon=${-73.9865007}`)
+      res.redirect(`/notes?tag=${tagLimit}&currState=default&currLat=${40.693710}&currLon=${-73.987221}`)
     }
   }
 });
@@ -346,7 +347,7 @@ function getCurrState(currStateFromReq) {
 
 function getCurrLocation(currLatFromReq, currLonFromReq) {
   if (currLatFromReq === undefined || currLonFromReq === undefined) {
-    return {lat: 40.7539278, lon: -73.9865007};
+    return {lat: 40.693710, lon: -73.987221};
   } else {
     return {lat: currLatFromReq, lon: currLonFromReq};
   }
